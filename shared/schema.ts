@@ -205,6 +205,29 @@ export const insertActivitySchema = createInsertSchema(activities).pick({
   metadata: true,
 });
 
+// Notifications schema
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  type: text("type").notNull(), // info, success, warning, error, holiday, etc.
+  isRead: boolean("is_read").default(false),
+  link: text("link"), // Optional link to navigate when clicking the notification
+  createdAt: timestamp("created_at").defaultNow(),
+  metadata: json("metadata"), // Optional additional data
+});
+
+export const insertNotificationSchema = createInsertSchema(notifications).pick({
+  userId: true,
+  title: true,
+  message: true,
+  type: true,
+  isRead: true,
+  link: true,
+  metadata: true,
+});
+
 // Export types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -229,3 +252,6 @@ export type InsertDepartment = z.infer<typeof insertDepartmentSchema>;
 
 export type Activity = typeof activities.$inferSelect;
 export type InsertActivity = z.infer<typeof insertActivitySchema>;
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;

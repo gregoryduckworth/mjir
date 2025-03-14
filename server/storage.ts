@@ -49,6 +49,15 @@ export interface IStorage {
   getActivity(id: number): Promise<Activity | undefined>;
   createActivity(activity: InsertActivity): Promise<Activity>;
   
+  // Notifications
+  getAllNotifications(): Promise<Notification[]>;
+  getNotificationsByUserId(userId: number): Promise<Notification[]>;
+  getUnreadNotificationsByUserId(userId: number): Promise<Notification[]>;
+  getNotification(id: number): Promise<Notification | undefined>;
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  markNotificationAsRead(id: number): Promise<Notification>;
+  markAllNotificationsAsRead(userId: number): Promise<void>;
+  
   // Session store
   sessionStore: session.SessionStore;
 }
@@ -62,6 +71,7 @@ export class MemStorage implements IStorage {
   private userCourseProgress: Map<number, UserCourseProgress>;
   private departments: Map<number, Department>;
   private activities: Map<number, Activity>;
+  private notifications: Map<number, Notification>;
   
   private userIdCounter: number;
   private holidayRequestIdCounter: number;
@@ -71,6 +81,7 @@ export class MemStorage implements IStorage {
   private progressIdCounter: number;
   private departmentIdCounter: number;
   private activityIdCounter: number;
+  private notificationIdCounter: number;
   
   sessionStore: session.SessionStore;
 
@@ -83,6 +94,7 @@ export class MemStorage implements IStorage {
     this.userCourseProgress = new Map();
     this.departments = new Map();
     this.activities = new Map();
+    this.notifications = new Map();
     
     this.userIdCounter = 1;
     this.holidayRequestIdCounter = 1;
@@ -92,6 +104,7 @@ export class MemStorage implements IStorage {
     this.progressIdCounter = 1;
     this.departmentIdCounter = 1;
     this.activityIdCounter = 1;
+    this.notificationIdCounter = 1;
     
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000, // prune expired entries every 24h
