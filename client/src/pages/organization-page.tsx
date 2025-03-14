@@ -44,13 +44,16 @@ export default function OrganizationPage() {
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">Organization Structure</h1>
-        <div className="relative">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold mb-1">Organization Structure</h1>
+          <p className="text-gray-500 text-sm">View and navigate your company's organizational structure</p>
+        </div>
+        <div className="relative w-full sm:w-auto">
           <Input
             type="text"
             placeholder="Search employees"
-            className="pl-10 pr-4 py-2"
+            className="pl-10 pr-4 py-2 w-full"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -105,7 +108,7 @@ export default function OrganizationPage() {
                   {filteredUsers.map((user: User) => (
                     <div 
                       key={user.id}
-                      className="p-4 border rounded-lg hover:border-primary/50 cursor-pointer transition-all"
+                      className="p-4 border rounded-lg hover:shadow-md hover:border-primary/40 cursor-pointer transition-all bg-white"
                       onClick={() => setSelectedEmployee(user)}
                     >
                       <div className="flex items-center space-x-3">
@@ -113,17 +116,34 @@ export default function OrganizationPage() {
                           <img 
                             src={user.profileImage} 
                             alt={`${user.firstName} ${user.lastName}`}
-                            className="w-12 h-12 rounded-full object-cover"
+                            className="w-14 h-14 rounded-full object-cover border-2 border-primary/10"
                           />
                         ) : (
-                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
+                          <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-lg border border-primary/10">
                             {user.firstName.charAt(0)}{user.lastName.charAt(0)}
                           </div>
                         )}
                         <div>
                           <h3 className="font-medium">{user.firstName} {user.lastName}</h3>
                           <p className="text-sm text-gray-500">{user.position}</p>
-                          <p className="text-xs text-gray-400">{user.department}</p>
+                          <div className="flex items-center mt-1">
+                            <span className="inline-block w-2 h-2 rounded-full bg-primary/70 mr-1"></span>
+                            <p className="text-xs text-gray-400">{user.department}</p>
+                          </div>
+                          {user.managerId && (
+                            <div className="text-xs text-gray-400 mt-1 italic">
+                              Reports to: {users.find((u: User) => u.id === user.managerId)?.firstName || ''} {users.find((u: User) => u.id === user.managerId)?.lastName || ''}
+                            </div>
+                          )}
+                          <button 
+                            className="text-xs font-medium text-primary hover:underline mt-1.5"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedEmployee(user);
+                            }}
+                          >
+                            View Profile →
+                          </button>
                         </div>
                       </div>
                     </div>
