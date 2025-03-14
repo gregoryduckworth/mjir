@@ -335,6 +335,67 @@ export class MemStorage implements IStorage {
     return activity;
   }
   
+  // Notifications
+  async getAllNotifications(): Promise<Notification[]> {
+    return Array.from(this.notifications.values());
+  }
+  
+  async getNotificationsByUserId(userId: number): Promise<Notification[]> {
+    return Array.from(this.notifications.values())
+      .filter(notification => notification.userId === userId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+  
+  async getUnreadNotificationsByUserId(userId: number): Promise<Notification[]> {
+    return Array.from(this.notifications.values())
+      .filter(notification => notification.userId === userId && !notification.isRead)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+  
+  async getNotification(id: number): Promise<Notification | undefined> {
+    return this.notifications.get(id);
+  }
+  
+  async createNotification(insertNotification: InsertNotification): Promise<Notification> {
+    const id = this.notificationIdCounter++;
+    const now = new Date().toISOString();
+    const notification: Notification = {
+      ...insertNotification,
+      id,
+      createdAt: now
+    };
+    this.notifications.set(id, notification);
+    return notification;
+  }
+  
+  async markNotificationAsRead(id: number): Promise<Notification> {
+    const notification = this.notifications.get(id);
+    if (!notification) {
+      throw new Error(`Notification with id ${id} not found`);
+    }
+    
+    const updated = {
+      ...notification,
+      isRead: true
+    };
+    
+    this.notifications.set(id, updated);
+    return updated;
+  }
+  
+  async markAllNotificationsAsRead(userId: number): Promise<void> {
+    const userNotifications = await this.getNotificationsByUserId(userId);
+    
+    for (const notification of userNotifications) {
+      if (!notification.isRead) {
+        this.notifications.set(notification.id, {
+          ...notification,
+          isRead: true
+        });
+      }
+    }
+  }
+  
   // Seed initial data
   private async seedData() {
     // Create users

@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { z } from "zod";
-import { insertHolidayRequestSchema, insertPolicySchema, insertCourseSchema, insertCourseModuleSchema, insertUserCourseProgressSchema, insertDepartmentSchema, insertActivitySchema } from "@shared/schema";
+import { insertHolidayRequestSchema, insertPolicySchema, insertCourseSchema, insertCourseModuleSchema, insertUserCourseProgressSchema, insertDepartmentSchema, insertActivitySchema, insertNotificationSchema } from "@shared/schema";
 import { formatISO, addDays, subDays, addMonths, format } from "date-fns";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -151,6 +151,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         metadata: { holidayRequestId: holidayRequest.id }
       });
       
+      // Create notifications for managers
+      await createHolidayRequestNotification(holidayRequest, req.user.id);
+      
       res.status(201).json(holidayRequest);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -231,6 +234,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: `Your holiday request was <span class="font-medium ${status === 'approved' ? 'text-success' : 'text-destructive'}">${status}</span>`,
         metadata: { holidayRequestId: requestId }
       });
+      
+      // Create notification for employee
+      await createHolidayStatusNotification(updatedRequest, status, originalRequest.userId, user.id);
       
       res.json(updatedRequest);
     } catch (error) {
@@ -398,6 +404,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     res.json(recentActivities);
   });
+
+  // Notifications
+  app.get("/api/notifications", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    
+    const notifications = await storage.getNotificationsByUserId(req.user.id);
+    res.json(notifications);
+  });
+
+  app.get("/api/notifications/unread", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    
+    const notifications = await storage.getUnreadNotificationsByUserId(req.user.id);
+    res.json(notifications);
+  });
+
+  app.patch("/api/notifications/:id/read", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    
+    const notificationId = parseInt(req.params.id);
+    
+    try {
+      const notification = await storage.getNotification(notificationId);
+      
+      if (!notification) {
+        return res.status(404).json({ error: "Notification not found" });
+      }
+      
+      // Make sure users can only mark their own notifications as read
+      if (notification.userId !== req.user.id) {
+        return res.status(403).json({ error: "You can only mark your own notifications as read" });
+      }
+      
+      const updatedNotification = await storage.markNotificationAsRead(notificationId);
+      res.json(updatedNotification);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Failed to mark notification as read" });
+    }
+  });
+
+  app.post("/api/notifications/read-all", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    
+    try {
+      await storage.markAllNotificationsAsRead(req.user.id);
+      res.sendStatus(200);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Failed to mark all notifications as read" });
+    }
+  });
+
+  // Update the holiday request and approval endpoints to create notifications
+  const createHolidayRequestNotification = async (holidayRequest, userId) => {
+    const users = await storage.getAllUsers();
+    const requester = users.find(u => u.id === userId);
+    const requesterName = requester ? `${requester.firstName} ${requester.lastName}` : "An employee";
+    const managers = users.filter(u => u.role === 'manager' || u.role === 'hr_manager' || u.role === 'admin');
+    
+    // Create notification for each manager
+    for (const manager of managers) {
+      if (manager.id !== userId) { // Don't notify the requester
+        await storage.createNotification({
+          userId: manager.id,
+          title: "New Holiday Request",
+          message: `${requesterName} has submitted a holiday request`,
+          type: "holiday",
+          isRead: false,
+          link: "/holiday",
+          metadata: { holidayRequestId: holidayRequest.id }
+        });
+      }
+    }
+  };
+
+  const createHolidayStatusNotification = async (holidayRequest, status, employeeId, approverId) => {
+    const users = await storage.getAllUsers();
+    const approver = users.find(u => u.id === approverId);
+    const approverName = approver ? `${approver.firstName} ${approver.lastName}` : "A manager";
+    
+    await storage.createNotification({
+      userId: employeeId,
+      title: "Holiday Request Status",
+      message: `Your holiday request has been ${status} by ${approverName}`,
+      type: status === "approved" ? "success" : "error",
+      isRead: false,
+      link: "/holiday",
+      metadata: { holidayRequestId: holidayRequest.id }
+    });
+  };
 
   const httpServer = createServer(app);
   return httpServer;
