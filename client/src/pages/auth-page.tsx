@@ -82,6 +82,7 @@ export default function AuthPage() {
       firstName: "",
       lastName: "",
       email: "",
+      role: "employee",  // Default role
       department: "",
       position: "",
       profileImage: "",
@@ -172,6 +173,11 @@ export default function AuthPage() {
                         "Login"
                       )}
                     </Button>
+                    <div className="mt-4 text-xs text-gray-500">
+                      <p><strong>Demo Accounts:</strong></p>
+                      <p>Username: <code className="bg-gray-100 px-1 rounded">admin</code> or <code className="bg-gray-100 px-1 rounded">mark</code> or <code className="bg-gray-100 px-1 rounded">emma</code></p>
+                      <p>Password: <code className="bg-gray-100 px-1 rounded">password</code></p>
+                    </div>
                   </form>
                 </Form>
               </TabsContent>

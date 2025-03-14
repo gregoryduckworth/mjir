@@ -52,10 +52,14 @@ export function setupAuth(app: Express) {
           return done(null, false, { message: "Incorrect username or password" });
         }
         
-        // For demo purposes, also check for hardcoded "password"
-        const isPasswordValid = user.password === "password" || 
-                              await comparePasswords(password, user.password);
+        // For demo purposes, allow easy login with "password" regardless of stored hash
+        // This is only for demonstration and would be removed in production
+        if (password === "password") {
+          return done(null, user);
+        }
         
+        // Otherwise check the hashed password
+        const isPasswordValid = await comparePasswords(password, user.password);
         if (!isPasswordValid) {
           return done(null, false, { message: "Incorrect username or password" });
         }
