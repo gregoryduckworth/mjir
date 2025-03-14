@@ -14,11 +14,13 @@ import { ContentLoader } from "@/components/ui/loading";
 import { OrgChart } from "@/components/organization/org-chart";
 import { EmployeeCard } from "@/components/organization/employee-card";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function OrganizationPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [selectedEmployee, setSelectedEmployee] = useState<User | null>(null);
+  const { user: currentUser } = useAuth();
 
   const { data: users = [], isLoading: isLoadingUsers } = useQuery({
     queryKey: ["/api/users"],
@@ -131,12 +133,15 @@ export default function OrganizationPage() {
             </CardContent>
           </Card>
 
-          <EmployeeCard 
-            employee={selectedEmployee} 
-            isOpen={!!selectedEmployee} 
-            onClose={() => setSelectedEmployee(null)}
-            allUsers={users}
-          />
+          {currentUser && (
+            <EmployeeCard 
+              employee={selectedEmployee} 
+              isOpen={!!selectedEmployee} 
+              onClose={() => setSelectedEmployee(null)}
+              allUsers={users}
+              currentUser={currentUser}
+            />
+          )}
         </>
       )}
     </div>

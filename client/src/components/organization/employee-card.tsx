@@ -33,9 +33,10 @@ interface EmployeeCardProps {
   isOpen: boolean;
   onClose: () => void;
   allUsers: User[];
+  currentUser: User;
 }
 
-export function EmployeeCard({ employee, isOpen, onClose, allUsers }: EmployeeCardProps) {
+export function EmployeeCard({ employee, isOpen, onClose, allUsers, currentUser }: EmployeeCardProps) {
   if (!employee) return null;
 
   const manager = employee.managerId 
@@ -43,6 +44,18 @@ export function EmployeeCard({ employee, isOpen, onClose, allUsers }: EmployeeCa
     : null;
 
   const directReports = allUsers.filter(user => user.managerId === employee.id);
+  
+  // Permission checks
+  const isAdmin = currentUser.role === 'admin';
+  const isManager = directReports.length > 0;
+  const isSelf = currentUser.id === employee.id;
+  const isEmployeeManager = employee.managerId === currentUser.id;
+  
+  // Access control based on roles
+  const canViewPersonalDetails = isAdmin || isSelf || isEmployeeManager;
+  const canViewEmploymentDetails = isAdmin || isSelf || isEmployeeManager || isManager;
+  const canViewCompensation = isAdmin || isSelf;
+  const canViewSkills = isAdmin || isSelf || isEmployeeManager;
 
   // Format currency for better display
   const formatCurrency = (amount: number | undefined) => {
@@ -132,61 +145,63 @@ export function EmployeeCard({ employee, isOpen, onClose, allUsers }: EmployeeCa
           
           <Separator className="my-6" />
           
-          <Tabs defaultValue="personal" className="w-full">
-            <TabsList className="grid grid-cols-4 mb-4">
-              <TabsTrigger value="personal">Personal</TabsTrigger>
+          <Tabs defaultValue={canViewPersonalDetails ? "personal" : "employment"} className="w-full">
+            <TabsList className={`grid ${canViewPersonalDetails && canViewEmploymentDetails && canViewCompensation && canViewSkills ? 'grid-cols-4' : canViewPersonalDetails && canViewEmploymentDetails && (canViewCompensation || canViewSkills) ? 'grid-cols-3' : 'grid-cols-2'} mb-4`}>
+              {canViewPersonalDetails && <TabsTrigger value="personal">Personal</TabsTrigger>}
               <TabsTrigger value="employment">Employment</TabsTrigger>
-              <TabsTrigger value="compensation">Compensation</TabsTrigger>
-              <TabsTrigger value="skills">Skills</TabsTrigger>
+              {canViewCompensation && <TabsTrigger value="compensation">Compensation</TabsTrigger>}
+              {canViewSkills && <TabsTrigger value="skills">Skills</TabsTrigger>}
             </TabsList>
             
-            <TabsContent value="personal" className="space-y-4">
-              <h3 className="text-lg font-medium">Personal Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {canViewPersonalDetails && (
+              <TabsContent value="personal" className="space-y-4">
+                <h3 className="text-lg font-medium">Personal Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-xs text-gray-500">Date of Birth</p>
+                    <p className="text-sm">{formatDate(employee.dateOfBirth)}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-gray-500">Nationality</p>
+                    <p className="text-sm">{employee.nationality || 'N/A'}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-gray-500">Marital Status</p>
+                    <p className="text-sm">{employee.maritalStatus || 'N/A'}</p>
+                  </div>
+                </div>
+                
+                <h3 className="text-lg font-medium mt-6">Contact Information</h3>
                 <div className="space-y-1">
-                  <p className="text-xs text-gray-500">Date of Birth</p>
-                  <p className="text-sm">{formatDate(employee.dateOfBirth)}</p>
+                  <p className="text-xs text-gray-500">Address</p>
+                  <p className="text-sm">
+                    {employee.address 
+                      ? `${employee.address}, ${employee.city || ''}, ${employee.state || ''} ${employee.zipCode || ''}`
+                      : 'Address not available'
+                    }
+                  </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs text-gray-500">Nationality</p>
-                  <p className="text-sm">{employee.nationality || 'N/A'}</p>
+                  <p className="text-xs text-gray-500">Country</p>
+                  <p className="text-sm">{employee.country || 'N/A'}</p>
+                </div>
+                
+                <h3 className="text-lg font-medium mt-6">Emergency Contact</h3>
+                <div className="space-y-1">
+                  <p className="text-xs text-gray-500">Name & Relationship</p>
+                  <p className="text-sm">
+                    {employee.emergencyContactName 
+                      ? `${employee.emergencyContactName} (${employee.emergencyContactRelation || 'Relation not specified'})`
+                      : 'Not provided'
+                    }
+                  </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs text-gray-500">Marital Status</p>
-                  <p className="text-sm">{employee.maritalStatus || 'N/A'}</p>
+                  <p className="text-xs text-gray-500">Phone</p>
+                  <p className="text-sm">{employee.emergencyContactPhone || 'Not provided'}</p>
                 </div>
-              </div>
-              
-              <h3 className="text-lg font-medium mt-6">Contact Information</h3>
-              <div className="space-y-1">
-                <p className="text-xs text-gray-500">Address</p>
-                <p className="text-sm">
-                  {employee.address 
-                    ? `${employee.address}, ${employee.city || ''}, ${employee.state || ''} ${employee.zipCode || ''}`
-                    : 'Address not available'
-                  }
-                </p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-xs text-gray-500">Country</p>
-                <p className="text-sm">{employee.country || 'N/A'}</p>
-              </div>
-              
-              <h3 className="text-lg font-medium mt-6">Emergency Contact</h3>
-              <div className="space-y-1">
-                <p className="text-xs text-gray-500">Name & Relationship</p>
-                <p className="text-sm">
-                  {employee.emergencyContactName 
-                    ? `${employee.emergencyContactName} (${employee.emergencyContactRelation || 'Relation not specified'})`
-                    : 'Not provided'
-                  }
-                </p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-xs text-gray-500">Phone</p>
-                <p className="text-sm">{employee.emergencyContactPhone || 'Not provided'}</p>
-              </div>
-            </TabsContent>
+              </TabsContent>
+            )}
             
             <TabsContent value="employment" className="space-y-4">
               <h3 className="text-lg font-medium">Employment Details</h3>
@@ -238,114 +253,118 @@ export function EmployeeCard({ employee, isOpen, onClose, allUsers }: EmployeeCa
               )}
             </TabsContent>
             
-            <TabsContent value="compensation" className="space-y-4">
-              <h3 className="text-lg font-medium">Salary Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <p className="text-xs text-gray-500">Salary</p>
-                  <p className="text-sm font-semibold">
-                    {employee.salary ? formatCurrency(employee.salary) : 'N/A'} 
-                    <span className="font-normal text-gray-500 text-xs ml-1">
-                      ({employee.salaryFrequency || 'frequency not specified'})
-                    </span>
-                  </p>
-                </div>
-              </div>
-              
-              <h3 className="text-lg font-medium mt-6">Banking Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <p className="text-xs text-gray-500">Bank</p>
-                  <p className="text-sm">{employee.bankName || 'N/A'}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-gray-500">Tax ID</p>
-                  <p className="text-sm">{employee.taxId || 'N/A'}</p>
-                </div>
-              </div>
-              
-              {employee.benefits && (
-                <>
-                  <h3 className="text-lg font-medium mt-6">Benefits</h3>
-                  <div className="p-3 bg-gray-50 rounded-md">
-                    <pre className="text-sm whitespace-pre-wrap">
-                      {typeof employee.benefits === 'object' 
-                        ? JSON.stringify(employee.benefits, null, 2) 
-                        : String(employee.benefits)
-                      }
-                    </pre>
+            {canViewCompensation && (
+              <TabsContent value="compensation" className="space-y-4">
+                <h3 className="text-lg font-medium">Salary Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-xs text-gray-500">Salary</p>
+                    <p className="text-sm font-semibold">
+                      {employee.salary ? formatCurrency(employee.salary) : 'N/A'} 
+                      <span className="font-normal text-gray-500 text-xs ml-1">
+                        ({employee.salaryFrequency || 'frequency not specified'})
+                      </span>
+                    </p>
                   </div>
-                </>
-              )}
-            </TabsContent>
+                </div>
+                
+                <h3 className="text-lg font-medium mt-6">Banking Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-xs text-gray-500">Bank</p>
+                    <p className="text-sm">{employee.bankName || 'N/A'}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-gray-500">Tax ID</p>
+                    <p className="text-sm">{employee.taxId || 'N/A'}</p>
+                  </div>
+                </div>
+                
+                {employee.benefits && (
+                  <>
+                    <h3 className="text-lg font-medium mt-6">Benefits</h3>
+                    <div className="p-3 bg-gray-50 rounded-md">
+                      <pre className="text-sm whitespace-pre-wrap">
+                        {typeof employee.benefits === 'object' 
+                          ? JSON.stringify(employee.benefits, null, 2) 
+                          : String(employee.benefits)
+                        }
+                      </pre>
+                    </div>
+                  </>
+                )}
+              </TabsContent>
+            )}
             
-            <TabsContent value="skills" className="space-y-4">
-              <h3 className="text-lg font-medium">Skills & Qualifications</h3>
-              
-              {employee.skills && employee.skills.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Skills</p>
-                  <div className="flex flex-wrap gap-2">
-                    {employee.skills.map((skill, index) => (
-                      <Badge key={index} variant="outline">{skill}</Badge>
-                    ))}
+            {canViewSkills && (
+              <TabsContent value="skills" className="space-y-4">
+                <h3 className="text-lg font-medium">Skills & Qualifications</h3>
+                
+                {employee.skills && employee.skills.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">Skills</p>
+                    <div className="flex flex-wrap gap-2">
+                      {employee.skills.map((skill, index) => (
+                        <Badge key={index} variant="outline">{skill}</Badge>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-              
-              {employee.languages && employee.languages.length > 0 && (
-                <div className="space-y-2 mt-4">
-                  <p className="text-sm font-medium">Languages</p>
-                  <div className="flex flex-wrap gap-2">
-                    {employee.languages.map((language, index) => (
-                      <Badge key={index} variant="outline">{language}</Badge>
-                    ))}
+                )}
+                
+                {employee.languages && employee.languages.length > 0 && (
+                  <div className="space-y-2 mt-4">
+                    <p className="text-sm font-medium">Languages</p>
+                    <div className="flex flex-wrap gap-2">
+                      {employee.languages.map((language, index) => (
+                        <Badge key={index} variant="outline">{language}</Badge>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-              
-              {employee.certifications && (
-                <div className="space-y-2 mt-4">
-                  <p className="text-sm font-medium">Certifications</p>
-                  <div className="p-3 bg-gray-50 rounded-md">
-                    <pre className="text-sm whitespace-pre-wrap">
-                      {typeof employee.certifications === 'object' 
-                        ? JSON.stringify(employee.certifications, null, 2) 
-                        : String(employee.certifications)
-                      }
-                    </pre>
+                )}
+                
+                {employee.certifications && (
+                  <div className="space-y-2 mt-4">
+                    <p className="text-sm font-medium">Certifications</p>
+                    <div className="p-3 bg-gray-50 rounded-md">
+                      <pre className="text-sm whitespace-pre-wrap">
+                        {typeof employee.certifications === 'object' 
+                          ? JSON.stringify(employee.certifications, null, 2) 
+                          : String(employee.certifications)
+                        }
+                      </pre>
+                    </div>
                   </div>
-                </div>
-              )}
-              
-              {employee.educationHistory && (
-                <div className="space-y-2 mt-4">
-                  <p className="text-sm font-medium">Education</p>
-                  <div className="p-3 bg-gray-50 rounded-md">
-                    <pre className="text-sm whitespace-pre-wrap">
-                      {typeof employee.educationHistory === 'object' 
-                        ? JSON.stringify(employee.educationHistory, null, 2) 
-                        : String(employee.educationHistory)
-                      }
-                    </pre>
+                )}
+                
+                {employee.educationHistory && (
+                  <div className="space-y-2 mt-4">
+                    <p className="text-sm font-medium">Education</p>
+                    <div className="p-3 bg-gray-50 rounded-md">
+                      <pre className="text-sm whitespace-pre-wrap">
+                        {typeof employee.educationHistory === 'object' 
+                          ? JSON.stringify(employee.educationHistory, null, 2) 
+                          : String(employee.educationHistory)
+                        }
+                      </pre>
+                    </div>
                   </div>
-                </div>
-              )}
-              
-              {employee.performanceRatings && (
-                <div className="space-y-2 mt-4">
-                  <p className="text-sm font-medium">Performance Ratings</p>
-                  <div className="p-3 bg-gray-50 rounded-md">
-                    <pre className="text-sm whitespace-pre-wrap">
-                      {typeof employee.performanceRatings === 'object' 
-                        ? JSON.stringify(employee.performanceRatings, null, 2) 
-                        : String(employee.performanceRatings)
-                      }
-                    </pre>
+                )}
+                
+                {isAdmin && employee.performanceRatings && (
+                  <div className="space-y-2 mt-4">
+                    <p className="text-sm font-medium">Performance Ratings</p>
+                    <div className="p-3 bg-gray-50 rounded-md">
+                      <pre className="text-sm whitespace-pre-wrap">
+                        {typeof employee.performanceRatings === 'object' 
+                          ? JSON.stringify(employee.performanceRatings, null, 2) 
+                          : String(employee.performanceRatings)
+                        }
+                      </pre>
+                    </div>
                   </div>
-                </div>
-              )}
-            </TabsContent>
+                )}
+              </TabsContent>
+            )}
           </Tabs>
         </div>
         
