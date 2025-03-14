@@ -8,7 +8,13 @@ import {
 } from "@/components/ui/collapsible";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronRight, Users } from "lucide-react";
+import { 
+  ChevronDown, 
+  ChevronRight, 
+  Users, 
+  Briefcase, 
+  Building2
+} from "lucide-react";
 
 interface OrgChartProps {
   departments: Department[];
@@ -54,14 +60,18 @@ function DepartmentNode({ department, users, head, onUserClick }: DepartmentNode
       onOpenChange={setIsOpen}
       className="border rounded-md mb-4"
     >
-      <CollapsibleTrigger className="flex items-center justify-between w-full p-4 text-left">
-        <div className="flex items-center space-x-2">
+      <CollapsibleTrigger className="flex items-center justify-between w-full p-4 text-left hover:bg-gray-50">
+        <div className="flex items-center space-x-3">
           {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          <Building2 size={18} className="text-primary" />
           <h3 className="font-medium">{department.name}</h3>
-          <Badge variant="outline" className="text-xs">
+          <Badge variant="outline" className="text-xs bg-primary/5">
             {departmentUsers.length} {departmentUsers.length === 1 ? 'member' : 'members'}
           </Badge>
         </div>
+        {department.description && (
+          <span className="text-xs text-gray-500 hidden md:inline-block">{department.description}</span>
+        )}
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className="p-4 pt-0 space-y-4">

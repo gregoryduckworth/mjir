@@ -6,6 +6,7 @@ import HolidayPage from "@/pages/holiday-page";
 import PoliciesPage from "@/pages/policies-page";
 import LearningPage from "@/pages/learning-page";
 import OrganizationPage from "@/pages/organization-page";
+import ProfilePage from "@/pages/profile-page";
 
 export default function HomePage() {
   return (
@@ -19,6 +20,7 @@ export default function HomePage() {
           <Route path="/policies" component={PoliciesPage} />
           <Route path="/learning" component={LearningPage} />
           <Route path="/organization" component={OrganizationPage} />
+          <Route path="/profile/:id" component={ProfilePage} />
         </Switch>
       </main>
       

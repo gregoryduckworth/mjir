@@ -67,18 +67,21 @@ export function Sidebar() {
       
       <div className="py-4">
         {user && (
-          <div className="px-6 py-3 mb-4">
-            <div className="flex items-center space-x-3">
-              <Avatar>
-                <AvatarImage src={user.profileImage} alt={`${user.firstName} ${user.lastName}`} />
-                <AvatarFallback>{user.firstName.charAt(0)}{user.lastName.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-medium text-sm">{user.firstName} {user.lastName}</p>
-                <p className="text-xs text-gray-500">{user.position}</p>
+          <Link href={`/profile/${user.id}`} className="block">
+            <div className="px-6 py-3 mb-4 hover:bg-gray-50 rounded-md cursor-pointer transition-colors">
+              <div className="flex items-center space-x-3">
+                <Avatar>
+                  <AvatarImage src={user.profileImage} alt={`${user.firstName} ${user.lastName}`} />
+                  <AvatarFallback>{user.firstName.charAt(0)}{user.lastName.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-medium text-sm">{user.firstName} {user.lastName}</p>
+                  <p className="text-xs text-gray-500">{user.position}</p>
+                  <span className="text-xs text-primary">View profile</span>
+                </div>
               </div>
             </div>
-          </div>
+          </Link>
         )}
         
         <nav>
