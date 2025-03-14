@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -15,6 +15,42 @@ export const users = pgTable("users", {
   position: text("position").notNull(),
   profileImage: text("profile_image"),
   managerId: integer("manager_id"),
+  
+  // Personal details
+  dateOfBirth: date("date_of_birth"),
+  phoneNumber: text("phone_number"),
+  address: text("address"),
+  city: text("city"),
+  state: text("state"),
+  zipCode: text("zip_code"),
+  country: text("country"),
+  nationality: text("nationality"),
+  maritalStatus: text("marital_status"),
+  emergencyContactName: text("emergency_contact_name"),
+  emergencyContactPhone: text("emergency_contact_phone"),
+  emergencyContactRelation: text("emergency_contact_relation"),
+  
+  // Employment details
+  employeeId: text("employee_id"),
+  hireDate: date("hire_date"),
+  contractType: text("contract_type"), // full-time, part-time, contractor
+  workSchedule: text("work_schedule"), // e.g., "9-5, Mon-Fri", "Flexible", etc.
+  workLocation: text("work_location"), // office, remote, hybrid
+  
+  // Salary and benefits
+  salary: integer("salary"),
+  salaryFrequency: text("salary_frequency"), // annual, monthly, hourly
+  benefits: json("benefits"), // health insurance, retirement plans, etc.
+  bankAccountNumber: text("bank_account_number"),
+  bankName: text("bank_name"),
+  taxId: text("tax_id"),
+  
+  // Skills and attributes
+  skills: text("skills").array(),
+  languages: text("languages").array(),
+  certifications: json("certifications"),
+  educationHistory: json("education_history"),
+  performanceRatings: json("performance_ratings"),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -28,6 +64,25 @@ export const insertUserSchema = createInsertSchema(users).pick({
   position: true,
   profileImage: true,
   managerId: true,
+  // Personal details
+  dateOfBirth: true,
+  phoneNumber: true,
+  address: true,
+  city: true,
+  state: true,
+  zipCode: true,
+  country: true,
+  nationality: true,
+  maritalStatus: true,
+  // Employment details
+  employeeId: true,
+  hireDate: true,
+  contractType: true,
+  workSchedule: true,
+  workLocation: true,
+  // Salary information
+  salary: true,
+  salaryFrequency: true,
 });
 
 // Holiday request schema

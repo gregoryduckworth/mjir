@@ -335,7 +335,82 @@ export class MemStorage implements IStorage {
       department: "Human Resources",
       position: "HR Manager",
       profileImage: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
-      managerId: undefined
+      managerId: undefined,
+      // Personal details
+      dateOfBirth: new Date("1985-04-12"),
+      phoneNumber: "555-123-4567",
+      address: "123 Main Street",
+      city: "San Francisco",
+      state: "CA",
+      zipCode: "94105",
+      country: "United States",
+      nationality: "American",
+      maritalStatus: "Married",
+      emergencyContactName: "Michael Johnson",
+      emergencyContactPhone: "555-987-6543",
+      emergencyContactRelation: "Spouse",
+      // Employment details
+      employeeId: "EMP001",
+      hireDate: new Date("2015-06-01"),
+      contractType: "Full-time",
+      workSchedule: "9am-5pm, Mon-Fri",
+      workLocation: "Office",
+      // Salary and benefits
+      salary: 125000,
+      salaryFrequency: "Annual",
+      benefits: {
+        healthInsurance: "Premium Plan",
+        retirement: "401k with 6% match",
+        paidTimeOff: "25 days per year",
+        parentalLeave: "16 weeks"
+      },
+      bankName: "First National Bank",
+      bankAccountNumber: "XXXX-XXXX-7890",
+      taxId: "XXX-XX-1234",
+      // Skills and attributes
+      skills: ["Leadership", "HR Management", "Conflict Resolution", "Recruitment", "Employee Relations"],
+      languages: ["English", "Spanish"],
+      certifications: [
+        {
+          name: "PHR (Professional in Human Resources)",
+          issuedBy: "HRCI",
+          year: 2017,
+          expiryDate: "2023-05-15"
+        },
+        {
+          name: "SHRM-SCP",
+          issuedBy: "Society for Human Resource Management",
+          year: 2019
+        }
+      ],
+      educationHistory: [
+        {
+          institution: "University of California, Berkeley",
+          degree: "Master of Human Resource Management",
+          graduationYear: 2010
+        },
+        {
+          institution: "UCLA",
+          degree: "Bachelor of Business Administration",
+          graduationYear: 2008
+        }
+      ],
+      performanceRatings: {
+        "2022": {
+          overall: 4.8,
+          leadership: 4.9,
+          communication: 4.7,
+          technical: 4.5,
+          comments: "Exceptional leader who has transformed our HR department"
+        },
+        "2021": {
+          overall: 4.7,
+          leadership: 4.8,
+          communication: 4.6,
+          technical: 4.5,
+          comments: "Continues to excel in all areas"
+        }
+      }
     });
     
     const userMark = await this.createUser({
@@ -348,7 +423,80 @@ export class MemStorage implements IStorage {
       department: "Design",
       position: "Lead Designer",
       profileImage: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
-      managerId: adminUser.id
+      managerId: adminUser.id,
+      // Personal details
+      dateOfBirth: new Date("1988-09-22"),
+      phoneNumber: "555-987-1234",
+      address: "456 Market Street",
+      city: "San Francisco",
+      state: "CA",
+      zipCode: "94103",
+      country: "United States",
+      nationality: "British",
+      maritalStatus: "Single",
+      emergencyContactName: "James Wilson",
+      emergencyContactPhone: "555-345-6789",
+      emergencyContactRelation: "Brother",
+      // Employment details
+      employeeId: "EMP002",
+      hireDate: new Date("2017-03-15"),
+      contractType: "Full-time",
+      workSchedule: "10am-6pm, Mon-Fri",
+      workLocation: "Hybrid",
+      // Salary and benefits
+      salary: 95000,
+      salaryFrequency: "Annual",
+      benefits: {
+        healthInsurance: "Standard Plan",
+        retirement: "401k with 4% match",
+        paidTimeOff: "20 days per year"
+      },
+      bankName: "Chase Bank",
+      bankAccountNumber: "XXXX-XXXX-4321",
+      taxId: "XXX-XX-5678",
+      // Skills and attributes
+      skills: ["UI/UX Design", "Figma", "Adobe Creative Suite", "Design Systems", "Wireframing", "Prototyping"],
+      languages: ["English", "French"],
+      certifications: [
+        {
+          name: "Adobe Certified Expert",
+          issuedBy: "Adobe",
+          year: 2019
+        },
+        {
+          name: "UX Design Certification",
+          issuedBy: "Nielsen Norman Group",
+          year: 2020
+        }
+      ],
+      educationHistory: [
+        {
+          institution: "Royal College of Art",
+          degree: "Master of Arts in Design",
+          graduationYear: 2013
+        },
+        {
+          institution: "University of London",
+          degree: "Bachelor of Arts in Graphic Design",
+          graduationYear: 2011
+        }
+      ],
+      performanceRatings: {
+        "2022": {
+          overall: 4.5,
+          leadership: 4.3,
+          communication: 4.4,
+          technical: 4.9,
+          comments: "Mark continues to deliver outstanding design work and has grown as a team leader."
+        },
+        "2021": {
+          overall: 4.4,
+          leadership: 4.0,
+          communication: 4.2,
+          technical: 4.8,
+          comments: "Excellent technical skills and creative vision. Can improve on team communication."
+        }
+      }
     });
     
     const userEmma = await this.createUser({
@@ -361,7 +509,81 @@ export class MemStorage implements IStorage {
       department: "Product",
       position: "Product Manager",
       profileImage: "https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
-      managerId: adminUser.id
+      managerId: adminUser.id,
+      // Personal details
+      dateOfBirth: new Date("1990-05-15"),
+      phoneNumber: "555-456-7890",
+      address: "789 Pine Street",
+      city: "San Francisco",
+      state: "CA",
+      zipCode: "94108",
+      country: "United States",
+      nationality: "American",
+      maritalStatus: "Married",
+      emergencyContactName: "Robert Davis",
+      emergencyContactPhone: "555-789-0123",
+      emergencyContactRelation: "Spouse",
+      // Employment details
+      employeeId: "EMP003",
+      hireDate: new Date("2018-09-10"),
+      contractType: "Full-time",
+      workSchedule: "9am-5pm, Mon-Fri",
+      workLocation: "Remote",
+      // Salary and benefits
+      salary: 105000,
+      salaryFrequency: "Annual",
+      benefits: {
+        healthInsurance: "Premium Plan",
+        retirement: "401k with 5% match",
+        paidTimeOff: "22 days per year",
+        wellnessProgram: "Gym membership allowance"
+      },
+      bankName: "Bank of America",
+      bankAccountNumber: "XXXX-XXXX-9876",
+      taxId: "XXX-XX-9012",
+      // Skills and attributes
+      skills: ["Product Strategy", "Agile Methodologies", "User Research", "Roadmapping", "Stakeholder Management", "Data Analysis"],
+      languages: ["English", "Mandarin"],
+      certifications: [
+        {
+          name: "Certified Scrum Product Owner (CSPO)",
+          issuedBy: "Scrum Alliance",
+          year: 2019
+        },
+        {
+          name: "Product Management Certification",
+          issuedBy: "Product School",
+          year: 2020
+        }
+      ],
+      educationHistory: [
+        {
+          institution: "Stanford University",
+          degree: "MBA",
+          graduationYear: 2016
+        },
+        {
+          institution: "University of California, San Diego",
+          degree: "Bachelor of Science in Business Information Systems",
+          graduationYear: 2012
+        }
+      ],
+      performanceRatings: {
+        "2022": {
+          overall: 4.7,
+          leadership: 4.6,
+          communication: 4.8,
+          technical: 4.5,
+          comments: "Emma consistently delivers high-quality product strategies and has excellent communication with stakeholders."
+        },
+        "2021": {
+          overall: 4.5,
+          leadership: 4.3,
+          communication: 4.7,
+          technical: 4.4,
+          comments: "Strong leadership in product development and excellent stakeholder management."
+        }
+      }
     });
     
     // Create departments
