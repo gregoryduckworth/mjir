@@ -74,8 +74,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/holiday-requests", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     
-    const requests = await storage.getAllHolidayRequests();
-    res.json(requests);
+    // If user is an admin, HR manager, or manager, return all requests
+    // Otherwise only return the user's own requests
+    const user = req.user;
+    let requests;
+    
+    if (user.role === 'admin' || user.role === 'hr_manager' || user.role === 'manager') {
+      requests = await storage.getAllHolidayRequests();
+    } else {
+      requests = await storage.getHolidayRequestsByUserId(user.id);
+    }
+    
+    // Get user information for each request
+    const users = await storage.getAllUsers();
+    const requestsWithUserInfo = requests.map(request => {
+      const requestUser = users.find(u => u.id === request.userId);
+      return {
+        ...request,
+        user: requestUser ? {
+          id: requestUser.id,
+          firstName: requestUser.firstName,
+          lastName: requestUser.lastName,
+          department: requestUser.department,
+          position: requestUser.position,
+          profileImage: requestUser.profileImage
+        } : null
+      };
+    });
+    
+    res.json(requestsWithUserInfo);
   });
 
   app.get("/api/holiday-requests/upcoming", async (req, res) => {
@@ -132,6 +159,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to create holiday request" });
     }
   });
+  
+  // Holiday requests for manager approval
+  app.get("/api/holiday-requests/pending", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    
+    const user = req.user;
+    // Check if user is authorized to view pending requests (admin, HR manager, or manager)
+    if (user.role !== 'admin' && user.role !== 'hr_manager' && user.role !== 'manager') {
+      return res.status(403).send("Forbidden: Only managers can approve holiday requests");
+    }
+    
+    const allRequests = await storage.getAllHolidayRequests();
+    const pendingRequests = allRequests.filter(r => r.status === "pending");
+    
+    // Get user information for each request
+    const users = await storage.getAllUsers();
+    const pendingRequestsWithUserInfo = pendingRequests.map(request => {
+      const requestUser = users.find(u => u.id === request.userId);
+      return {
+        ...request,
+        user: requestUser ? {
+          id: requestUser.id,
+          firstName: requestUser.firstName,
+          lastName: requestUser.lastName,
+          department: requestUser.department,
+          position: requestUser.position,
+          profileImage: requestUser.profileImage
+        } : null
+      };
+    });
+    
+    res.json(pendingRequestsWithUserInfo);
+  });
+  
+  // Approve or reject holiday request
+  app.patch("/api/holiday-requests/:id/status", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    
+    const user = req.user;
+    // Check if user is authorized to change status (admin, HR manager, or manager)
+    if (user.role !== 'admin' && user.role !== 'hr_manager' && user.role !== 'manager') {
+      return res.status(403).send("Forbidden: Only managers can approve holiday requests");
+    }
+    
+    const requestId = parseInt(req.params.id);
+    const { status } = req.body;
+    
+    if (!status || (status !== 'approved' && status !== 'rejected')) {
+      return res.status(400).json({ error: "Invalid status. Must be 'approved' or 'rejected'" });
+    }
+    
+    try {
+      // Get the original request
+      const originalRequest = await storage.getHolidayRequest(requestId);
+      if (!originalRequest) {
+        return res.status(404).json({ error: "Holiday request not found" });
+      }
+      
+      // Update the request status
+      const updatedRequest = await storage.updateHolidayRequest(
+        requestId,
+        status,
+        user.id
+      );
+      
+      // Create activity for the employee who requested the holiday
+      await storage.createActivity({
+        userId: originalRequest.userId,
+        type: "holiday_" + status,
+        description: `Your holiday request was <span class="font-medium ${status === 'approved' ? 'text-success' : 'text-destructive'}">${status}</span>`,
+        metadata: { holidayRequestId: requestId }
+      });
+      
+      res.json(updatedRequest);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Failed to update holiday request status" });
+    }
+  });
 
   // Policies
   app.get("/api/policies", async (req, res) => {
@@ -152,9 +258,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/policies", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     
-    // Check if user is an HR admin
-    if (req.user.role !== 'admin' && req.user.department !== 'Human Resources') {
-      return res.status(403).send("Forbidden: Only HR administrators can create policies");
+    // Check if user is an HR admin or HR manager
+    if (req.user.role !== 'admin' && req.user.role !== 'hr_manager' && 
+        !(req.user.department === 'Human Resources' && req.user.position === 'HR Manager')) {
+      return res.status(403).send("Forbidden: Only HR personnel can create policies");
     }
     
     try {

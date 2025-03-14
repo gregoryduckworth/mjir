@@ -333,7 +333,7 @@ export class MemStorage implements IStorage {
       email: "sarah.johnson@example.com",
       role: "admin",
       department: "Human Resources",
-      position: "HR Manager",
+      position: "HR Director",
       profileImage: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
       managerId: undefined,
       // Personal details
@@ -586,6 +586,178 @@ export class MemStorage implements IStorage {
       }
     });
     
+    const userJennifer = await this.createUser({
+      username: "jennifer",
+      password: "$2b$10$BhXjpqXKgsk7XTgBDsO2MuALgXeIj5qqm0BcO7w1d/5FbRhLqBy8y", // "password"
+      firstName: "Jennifer",
+      lastName: "Thompson",
+      email: "jennifer.thompson@example.com",
+      role: "hr_manager",
+      department: "Human Resources",
+      position: "HR Manager",
+      profileImage: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
+      managerId: adminUser.id,
+      // Personal details
+      dateOfBirth: new Date("1987-11-23"),
+      phoneNumber: "555-234-5678",
+      address: "456 Cedar Avenue",
+      city: "San Francisco",
+      state: "CA",
+      zipCode: "94110",
+      country: "United States",
+      nationality: "American",
+      maritalStatus: "Single",
+      emergencyContactName: "Elizabeth Thompson",
+      emergencyContactPhone: "555-876-5432",
+      emergencyContactRelation: "Mother",
+      // Employment details
+      employeeId: "EMP004",
+      hireDate: new Date("2017-05-20"),
+      contractType: "Full-time",
+      workSchedule: "9am-5pm, Mon-Fri",
+      workLocation: "Hybrid",
+      // Salary and benefits
+      salary: 98000,
+      salaryFrequency: "Annual",
+      benefits: {
+        healthInsurance: "Premium Plan",
+        retirement: "401k with 5% match",
+        paidTimeOff: "22 days per year"
+      },
+      bankName: "Wells Fargo",
+      bankAccountNumber: "XXXX-XXXX-5432",
+      taxId: "XXX-XX-8765",
+      // Skills and attributes
+      skills: ["HR Management", "Talent Acquisition", "Employee Relations", "Policy Development", "Conflict Resolution", "Benefits Administration"],
+      languages: ["English", "Spanish"],
+      certifications: [
+        {
+          name: "SHRM-CP",
+          issuedBy: "Society for Human Resource Management",
+          year: 2018
+        },
+        {
+          name: "Certified Mediator",
+          issuedBy: "National Conflict Resolution Center",
+          year: 2019
+        }
+      ],
+      educationHistory: [
+        {
+          institution: "New York University",
+          degree: "Master of Science in Human Resource Management",
+          graduationYear: 2012
+        },
+        {
+          institution: "University of Michigan",
+          degree: "Bachelor of Arts in Psychology",
+          graduationYear: 2010
+        }
+      ],
+      performanceRatings: {
+        "2022": {
+          overall: 4.6,
+          leadership: 4.4,
+          communication: 4.8,
+          technical: 4.5,
+          comments: "Jennifer has exceptional communication skills and has greatly improved our HR policies and procedures."
+        },
+        "2021": {
+          overall: 4.4,
+          leadership: 4.2,
+          communication: 4.7,
+          technical: 4.3,
+          comments: "Strong performance in employee relations and policy implementation."
+        }
+      }
+    });
+    
+    const userDavid = await this.createUser({
+      username: "david",
+      password: "$2b$10$BhXjpqXKgsk7XTgBDsO2MuALgXeIj5qqm0BcO7w1d/5FbRhLqBy8y", // "password"
+      firstName: "David",
+      lastName: "Chen",
+      email: "david.chen@example.com",
+      role: "manager",
+      department: "Engineering",
+      position: "Engineering Manager",
+      profileImage: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
+      managerId: adminUser.id,
+      // Personal details
+      dateOfBirth: new Date("1984-03-18"),
+      phoneNumber: "555-876-2345",
+      address: "789 Oak Street",
+      city: "San Francisco",
+      state: "CA",
+      zipCode: "94107",
+      country: "United States",
+      nationality: "American",
+      maritalStatus: "Married",
+      emergencyContactName: "Lisa Chen",
+      emergencyContactPhone: "555-456-7891",
+      emergencyContactRelation: "Spouse",
+      // Employment details
+      employeeId: "EMP005",
+      hireDate: new Date("2016-11-15"),
+      contractType: "Full-time",
+      workSchedule: "9am-5pm, Mon-Fri",
+      workLocation: "Office",
+      // Salary and benefits
+      salary: 135000,
+      salaryFrequency: "Annual",
+      benefits: {
+        healthInsurance: "Premium Plan",
+        retirement: "401k with 6% match",
+        paidTimeOff: "23 days per year"
+      },
+      bankName: "Chase Bank",
+      bankAccountNumber: "XXXX-XXXX-3456",
+      taxId: "XXX-XX-6543",
+      // Skills and attributes
+      skills: ["Software Development", "Team Leadership", "Agile Methodologies", "System Architecture", "Code Reviews", "Technical Mentoring"],
+      languages: ["English", "Mandarin"],
+      certifications: [
+        {
+          name: "AWS Certified Solutions Architect",
+          issuedBy: "Amazon Web Services",
+          year: 2020
+        },
+        {
+          name: "Certified Scrum Master",
+          issuedBy: "Scrum Alliance",
+          year: 2018
+        }
+      ],
+      educationHistory: [
+        {
+          institution: "MIT",
+          degree: "Master of Science in Computer Science",
+          graduationYear: 2009
+        },
+        {
+          institution: "UC Berkeley",
+          degree: "Bachelor of Science in Computer Engineering",
+          graduationYear: 2007
+        }
+      ],
+      performanceRatings: {
+        "2022": {
+          overall: 4.8,
+          leadership: 4.7,
+          communication: 4.6,
+          technical: 4.9,
+          comments: "David is an exceptional technical leader who consistently delivers high-quality solutions and mentors his team effectively."
+        },
+        "2021": {
+          overall: 4.7,
+          leadership: 4.6,
+          communication: 4.5,
+          technical: 4.9,
+          comments: "Outstanding technical expertise and strong team leadership."
+        }
+      }
+    });
+    
     // Create departments
     const hrDept = await this.createDepartment({
       name: "Human Resources",
@@ -603,6 +775,12 @@ export class MemStorage implements IStorage {
       name: "Product",
       description: "Oversees product development and roadmap",
       headId: userEmma.id
+    });
+    
+    const engineeringDept = await this.createDepartment({
+      name: "Engineering",
+      description: "Develops and maintains all software and technical infrastructure",
+      headId: userDavid.id
     });
     
     // Create holiday requests
@@ -639,6 +817,31 @@ export class MemStorage implements IStorage {
       endDate: new Date("2023-12-31").toISOString(),
       duration: 8,
       reason: "Christmas holiday"
+    });
+    
+    // Pending holiday requests for manager approval
+    await this.createHolidayRequest({
+      userId: userMark.id,
+      startDate: new Date("2023-09-15").toISOString(),
+      endDate: new Date("2023-09-22").toISOString(),
+      duration: 6,
+      reason: "Family wedding"
+    });
+    
+    await this.createHolidayRequest({
+      userId: userDavid.id,
+      startDate: new Date("2023-10-05").toISOString(),
+      endDate: new Date("2023-10-13").toISOString(),
+      duration: 7,
+      reason: "Annual vacation"
+    });
+    
+    await this.createHolidayRequest({
+      userId: userJennifer.id,
+      startDate: new Date("2023-09-25").toISOString(),
+      endDate: new Date("2023-09-29").toISOString(),
+      duration: 5,
+      reason: "Conference attendance"
     });
     
     // Create policies
