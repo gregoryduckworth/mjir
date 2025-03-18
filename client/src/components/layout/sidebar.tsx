@@ -9,6 +9,7 @@ import {
   GraduationCap,
   Workflow,
   LogOut,
+  Users,
 } from "lucide-react";
 
 interface SidebarItemProps {
@@ -72,6 +73,16 @@ export function Sidebar() {
     },
   ];
 
+  const adminItems = [
+    {
+      icon: <Users size={18} />,
+      label: "User Management",
+      href: "/admin/users",
+    },
+  ];
+
+  const isAdmin = user?.role === "admin";
+
   return (
     <aside className="fixed top-0 left-0 w-[280px] h-full bg-white shadow-md z-10 hidden md:block">
       <div className="p-6 border-b border-gray-200">
@@ -126,6 +137,24 @@ export function Sidebar() {
                 isActive={location === item.href}
               />
             ))}
+            {isAdmin && (
+              <>
+                <li className="mt-4 px-6 py-2">
+                  <h2 className="text-xs font-semibold text-gray-400 uppercase">
+                    Admin
+                  </h2>
+                </li>
+                {adminItems.map((item) => (
+                  <SidebarItem
+                    key={item.href}
+                    icon={item.icon}
+                    label={item.label}
+                    href={item.href}
+                    isActive={location === item.href}
+                  />
+                ))}
+              </>
+            )}
           </ul>
         </nav>
       </div>

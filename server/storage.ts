@@ -166,6 +166,29 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values());
   }
 
+  async updateUser(
+    userId: number,
+    userData: Partial<Omit<User, "id">>
+  ): Promise<User | null> {
+    const user = this.users.get(userId);
+    if (!user) return null;
+
+    const updatedUser = {
+      ...user,
+      ...userData,
+    };
+
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+
+  async deleteUser(userId: number): Promise<boolean> {
+    if (!this.users.has(userId)) return false;
+
+    this.users.delete(userId);
+    return true;
+  }
+
   // Holiday Requests
   async getAllHolidayRequests(): Promise<HolidayRequest[]> {
     return Array.from(this.holidayRequests.values());
