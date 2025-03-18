@@ -1,9 +1,16 @@
 import { useState } from "react";
 import { useRoute } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { ContentLoader } from "@/components/ui/loading";
-import { ArrowLeft, Mail, Phone, MessageCircle, Briefcase, Calendar, MapPin, DollarSign, GraduationCap, Award, Globe, Languages } from "lucide-react";
+import {
+  ArrowLeft,
+  Mail,
+  Phone,
+  Briefcase,
+  MapPin,
+  DollarSign,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useUsers } from "@/hooks/use-api";
@@ -12,19 +19,34 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
-import { User, UserProfile } from "@/types";
+import { User } from "@/types";
 
 export default function ProfilePage() {
-  const [_, params] = useRoute("/profile/:id");
-  const userId = params?.id ? parseInt(params.id) : null;
+  // Update the route pattern to use a slug format
+  const [_, params] = useRoute("/profile/:slug");
   const { user: currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
 
   const { data: users, isLoading: isLoadingUsers } = useUsers();
 
-  const profileUser = userId && users
-    ? (users as User[]).find((user) => user.id === userId)
-    : null;
+  // Parse the slug to extract the user ID
+  const getUserFromSlug = (
+    slug: string | undefined,
+    users: User[] | undefined
+  ) => {
+    if (!slug || !users) return null;
+
+    // Otherwise, parse the slug format: "firstname-lastname-id"
+    const idMatch = slug.match(/-(\d+)$/);
+    if (idMatch && idMatch[1]) {
+      const userId = parseInt(idMatch[1]);
+      return users.find((user) => user.id === userId);
+    }
+
+    return null;
+  };
+
+  const profileUser = getUserFromSlug(params?.slug, users as User[]);
 
   if (isLoadingUsers) {
     return <ContentLoader text="Loading profile information..." />;
@@ -127,10 +149,14 @@ export default function ProfilePage() {
               <p className="text-gray-500 text-center mb-2">
                 {profileUser.position}
               </p>
-              <Badge variant="outline" className="mb-2">{profileUser.department}</Badge>
+              <Badge variant="outline" className="mb-2">
+                {profileUser.department}
+              </Badge>
               {profileUser.role && (
                 <Badge
-                  variant={profileUser.role === "admin" ? "default" : "secondary"}
+                  variant={
+                    profileUser.role === "admin" ? "default" : "secondary"
+                  }
                   className="mb-4"
                 >
                   {profileUser.role.charAt(0).toUpperCase() +
@@ -152,7 +178,9 @@ export default function ProfilePage() {
                 {manager && (
                   <div className="flex items-center gap-2">
                     <Briefcase className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm">Reports to: {manager.firstName} {manager.lastName}</span>
+                    <span className="text-sm">
+                      Reports to: {manager.firstName} {manager.lastName}
+                    </span>
                   </div>
                 )}
               </div>
@@ -175,7 +203,9 @@ export default function ProfilePage() {
                   <TabsTrigger value="compensation">Compensation</TabsTrigger>
                 )}
                 {canViewSkills && (
-                  <TabsTrigger value="skills">Skills & Qualifications</TabsTrigger>
+                  <TabsTrigger value="skills">
+                    Skills & Qualifications
+                  </TabsTrigger>
                 )}
               </TabsList>
 
@@ -190,7 +220,9 @@ export default function ProfilePage() {
                 <Separator />
 
                 <div>
-                  <h3 className="text-lg font-medium mb-2">Contact Information</h3>
+                  <h3 className="text-lg font-medium mb-2">
+                    Contact Information
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-gray-500" />
@@ -216,12 +248,28 @@ export default function ProfilePage() {
                       <h3 className="text-lg font-medium mb-2">Manager</h3>
                       <div className="flex items-center gap-3">
                         <Avatar>
-                          <AvatarImage src={manager.profileImage || ""} alt={`${manager.firstName} ${manager.lastName}`} />
-                          <AvatarFallback>{manager.firstName.charAt(0)}{manager.lastName.charAt(0)}</AvatarFallback>
+                          <AvatarImage
+                            src={manager.profileImage || ""}
+                            alt={`${manager.firstName} ${manager.lastName}`}
+                          />
+                          <AvatarFallback>
+                            {manager.firstName.charAt(0)}
+                            {manager.lastName.charAt(0)}
+                          </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium">{manager.firstName} {manager.lastName}</p>
-                          <p className="text-sm text-gray-500">{manager.position}</p>
+                          <Link
+                            href={`/profile/${manager.firstName.toLowerCase()}-${manager.lastName.toLowerCase()}-${
+                              manager.id
+                            }`}
+                          >
+                            <p className="font-medium hover:text-blue-600 cursor-pointer">
+                              {manager.firstName} {manager.lastName}
+                            </p>
+                          </Link>
+                          <p className="text-sm text-gray-500">
+                            {manager.position}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -232,17 +280,38 @@ export default function ProfilePage() {
                   <>
                     <Separator />
                     <div>
-                      <h3 className="text-lg font-medium mb-2">Direct Reports</h3>
+                      <h3 className="text-lg font-medium mb-2">
+                        Direct Reports
+                      </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {directReports.map((report) => (
-                          <div key={report.id} className="flex items-center gap-3">
+                          <div
+                            key={report.id}
+                            className="flex items-center gap-3"
+                          >
                             <Avatar>
-                              <AvatarImage src={report.profileImage || ""} alt={`${report.firstName} ${report.lastName}`} />
-                              <AvatarFallback>{report.firstName.charAt(0)}{report.lastName.charAt(0)}</AvatarFallback>
+                              <AvatarImage
+                                src={report.profileImage || ""}
+                                alt={`${report.firstName} ${report.lastName}`}
+                              />
+                              <AvatarFallback>
+                                {report.firstName.charAt(0)}
+                                {report.lastName.charAt(0)}
+                              </AvatarFallback>
                             </Avatar>
                             <div>
-                              <p className="font-medium">{report.firstName} {report.lastName}</p>
-                              <p className="text-sm text-gray-500">{report.position}</p>
+                              <Link
+                                href={`/profile/${report.firstName.toLowerCase()}-${report.lastName.toLowerCase()}-${
+                                  report.id
+                                }`}
+                              >
+                                <p className="font-medium hover:text-blue-600 cursor-pointer">
+                                  {report.firstName} {report.lastName}
+                                </p>
+                              </Link>
+                              <p className="text-sm text-gray-500">
+                                {report.position}
+                              </p>
                             </div>
                           </div>
                         ))}
@@ -256,15 +325,21 @@ export default function ProfilePage() {
                 <TabsContent value="personal" className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">Date of Birth</h3>
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">
+                        Date of Birth
+                      </h3>
                       <p>{formatDate(profileUser.dateOfBirth)}</p>
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">Nationality</h3>
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">
+                        Nationality
+                      </h3>
                       <p>{profileUser.nationality || "N/A"}</p>
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">Marital Status</h3>
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">
+                        Marital Status
+                      </h3>
                       <p>{profileUser.maritalStatus || "N/A"}</p>
                     </div>
                   </div>
@@ -279,7 +354,8 @@ export default function ProfilePage() {
                         <p>{profileUser.address || "N/A"}</p>
                         {profileUser.city && profileUser.zipCode && (
                           <p>
-                            {profileUser.city}, {profileUser.state} {profileUser.zipCode}
+                            {profileUser.city}, {profileUser.state}{" "}
+                            {profileUser.zipCode}
                           </p>
                         )}
                         <p>{profileUser.country}</p>
@@ -290,7 +366,9 @@ export default function ProfilePage() {
                   <Separator />
 
                   <div>
-                    <h3 className="text-lg font-medium mb-2">Emergency Contact</h3>
+                    <h3 className="text-lg font-medium mb-2">
+                      Emergency Contact
+                    </h3>
                     <div className="space-y-2">
                       {profileUser.emergencyContactName ? (
                         <>
@@ -303,12 +381,16 @@ export default function ProfilePage() {
                             <p>{profileUser.emergencyContactPhone}</p>
                           </div>
                           <div>
-                            <p className="text-sm text-gray-500">Relationship</p>
+                            <p className="text-sm text-gray-500">
+                              Relationship
+                            </p>
                             <p>{profileUser.emergencyContactRelation}</p>
                           </div>
                         </>
                       ) : (
-                        <p className="text-gray-500">No emergency contact information available.</p>
+                        <p className="text-gray-500">
+                          No emergency contact information available.
+                        </p>
                       )}
                     </div>
                   </div>
@@ -319,31 +401,45 @@ export default function ProfilePage() {
                 <TabsContent value="employment" className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">Employee ID</h3>
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">
+                        Employee ID
+                      </h3>
                       <p>{profileUser.employeeId || "N/A"}</p>
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">Hire Date</h3>
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">
+                        Hire Date
+                      </h3>
                       <p>{formatDate(profileUser.hireDate)}</p>
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">Department</h3>
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">
+                        Department
+                      </h3>
                       <p>{profileUser.department}</p>
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">Position</h3>
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">
+                        Position
+                      </h3>
                       <p>{profileUser.position}</p>
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">Contract Type</h3>
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">
+                        Contract Type
+                      </h3>
                       <p>{profileUser.contractType || "N/A"}</p>
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">Work Schedule</h3>
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">
+                        Work Schedule
+                      </h3>
                       <p>{profileUser.workSchedule || "N/A"}</p>
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">Work Location</h3>
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">
+                        Work Location
+                      </h3>
                       <p>{profileUser.workLocation || "N/A"}</p>
                     </div>
                   </div>
@@ -354,29 +450,42 @@ export default function ProfilePage() {
                 <TabsContent value="compensation" className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">Salary</h3>
-                      <p className="text-lg font-semibold">{formatCurrency(profileUser.salary)}</p>
-                      <p className="text-xs text-gray-500">{profileUser.salaryFrequency || "Annual"}</p>
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">
+                        Salary
+                      </h3>
+                      <p className="text-lg font-semibold">
+                        {formatCurrency(profileUser.salary)}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {profileUser.salaryFrequency || "Annual"}
+                      </p>
                     </div>
-                    
+
                     {profileUser.benefits && (
                       <div>
-                        <h3 className="text-sm font-medium text-gray-500 mb-1">Benefits</h3>
+                        <h3 className="text-sm font-medium text-gray-500 mb-1">
+                          Benefits
+                        </h3>
                         <div className="space-y-1">
-                          {Object.entries(profileUser.benefits as Record<string, any>).map(([key, value]) => (
+                          {Object.entries(
+                            profileUser.benefits as Record<string, any>
+                          ).map(([key, value]) => (
                             <div key={key} className="flex items-center gap-2">
                               <DollarSign className="h-3 w-3 text-gray-400" />
                               <span className="text-sm">
-                                {key.charAt(0).toUpperCase() + key.slice(1)}: {value}
+                                {key.charAt(0).toUpperCase() + key.slice(1)}:{" "}
+                                {value}
                               </span>
                             </div>
                           ))}
                         </div>
                       </div>
                     )}
-                    
+
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">Bank Information</h3>
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">
+                        Bank Information
+                      </h3>
                       <p>{profileUser.bankName || "N/A"}</p>
                       {profileUser.bankAccountNumber && (
                         <p className="text-sm text-gray-500">
@@ -384,9 +493,11 @@ export default function ProfilePage() {
                         </p>
                       )}
                     </div>
-                    
+
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 mb-1">Tax ID</h3>
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">
+                        Tax ID
+                      </h3>
                       <p>{profileUser.taxId || "N/A"}</p>
                     </div>
                   </div>
@@ -398,9 +509,11 @@ export default function ProfilePage() {
                   <div>
                     <h3 className="text-lg font-medium mb-2">Skills</h3>
                     <div className="flex flex-wrap gap-2">
-                      {profileUser.skills && profileUser.skills.length > 0 
+                      {profileUser.skills && profileUser.skills.length > 0
                         ? profileUser.skills.map((skill, index) => (
-                            <Badge key={index} variant="secondary">{skill}</Badge>
+                            <Badge key={index} variant="secondary">
+                              {skill}
+                            </Badge>
                           ))
                         : "No skills listed"}
                     </div>
@@ -411,13 +524,19 @@ export default function ProfilePage() {
                   <div>
                     <h3 className="text-lg font-medium mb-2">Education</h3>
                     <div className="space-y-3">
-                      {profileUser.educationHistory && Array.isArray(profileUser.educationHistory) && profileUser.educationHistory.length > 0
-                        ? profileUser.educationHistory.map((edu: any, index: number) => (
-                            <div key={index}>
-                              <p className="font-medium">{edu.degree}</p>
-                              <p className="text-sm text-gray-500">{edu.institution}, {edu.year}</p>
-                            </div>
-                          ))
+                      {profileUser.educationHistory &&
+                      Array.isArray(profileUser.educationHistory) &&
+                      profileUser.educationHistory.length > 0
+                        ? profileUser.educationHistory.map(
+                            (edu: any, index: number) => (
+                              <div key={index}>
+                                <p className="font-medium">{edu.degree}</p>
+                                <p className="text-sm text-gray-500">
+                                  {edu.institution}, {edu.year}
+                                </p>
+                              </div>
+                            )
+                          )
                         : "No education history listed"}
                     </div>
                   </div>
@@ -427,16 +546,21 @@ export default function ProfilePage() {
                   <div>
                     <h3 className="text-lg font-medium mb-2">Certifications</h3>
                     <div className="space-y-3">
-                      {profileUser.certifications && Array.isArray(profileUser.certifications) && profileUser.certifications.length > 0
-                        ? profileUser.certifications.map((cert: any, index: number) => (
-                            <div key={index}>
-                              <p className="font-medium">{cert.name}</p>
-                              <p className="text-sm text-gray-500">
-                                Issued: {formatDate(cert.issueDate)}, 
-                                {cert.expiryDate && ` Expires: ${formatDate(cert.expiryDate)}`}
-                              </p>
-                            </div>
-                          ))
+                      {profileUser.certifications &&
+                      Array.isArray(profileUser.certifications) &&
+                      profileUser.certifications.length > 0
+                        ? profileUser.certifications.map(
+                            (cert: any, index: number) => (
+                              <div key={index}>
+                                <p className="font-medium">{cert.name}</p>
+                                <p className="text-sm text-gray-500">
+                                  Issued: {formatDate(cert.issueDate)},
+                                  {cert.expiryDate &&
+                                    ` Expires: ${formatDate(cert.expiryDate)}`}
+                                </p>
+                              </div>
+                            )
+                          )
                         : "No certifications listed"}
                     </div>
                   </div>
@@ -448,7 +572,9 @@ export default function ProfilePage() {
                     <div className="flex flex-wrap gap-2">
                       {profileUser.languages && profileUser.languages.length > 0
                         ? profileUser.languages.map((lang, index) => (
-                            <Badge key={index} variant="outline">{lang}</Badge>
+                            <Badge key={index} variant="outline">
+                              {lang}
+                            </Badge>
                           ))
                         : "No languages listed"}
                     </div>
