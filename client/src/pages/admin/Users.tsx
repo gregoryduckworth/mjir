@@ -108,6 +108,45 @@ export default function Users() {
     },
   });
 
+  const updateManyUsers = useMutation({
+    mutationFn: async ({
+      userIds,
+      managerId,
+    }: {
+      userIds: number[];
+      managerId: number | null;
+    }) => {
+      // Update each user one by one
+      const promises = userIds.map((userId) => {
+        return fetch(`/api/admin/users/${userId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ managerId }),
+        });
+      });
+
+      const results = await Promise.all(promises);
+      const failedUpdates = results.filter((response) => !response.ok);
+
+      if (failedUpdates.length > 0) {
+        throw new Error(`Failed to update ${failedUpdates.length} users`);
+      }
+
+      return { success: true };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      toast({ title: "Users reassigned successfully" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const [isReassignDialogOpen, setIsReassignDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<number | null>(null);
   const [subordinates, setSubordinates] = useState<User[]>([]);
@@ -507,12 +546,20 @@ export default function Users() {
               <Button
                 onClick={() => {
                   if (userToDelete) {
+                    // First update all subordinates with new manager
+                    if (subordinates.length > 0) {
+                      updateManyUsers.mutate({
+                        userIds: subordinates.map((user) => user.id),
+                        managerId:
+                          newManagerId === "none"
+                            ? null
+                            : parseInt(newManagerId),
+                      });
+                    }
+                    // Then delete the user
                     deleteUser.mutate({
                       userId: userToDelete,
-                      newManagerId:
-                        newManagerId === "none"
-                          ? undefined
-                          : parseInt(newManagerId),
+                      newManagerId: undefined,
                     });
                   }
                 }}
