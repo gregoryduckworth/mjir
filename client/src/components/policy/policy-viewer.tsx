@@ -1,4 +1,4 @@
-import { Policy } from "@shared/schema";
+import { Policy } from "@/types";
 import {
   Dialog,
   DialogContent,

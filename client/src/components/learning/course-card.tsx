@@ -1,4 +1,4 @@
-import { Course, UserCourseProgress } from "@shared/schema";
+import { Course, UserCourseProgress } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

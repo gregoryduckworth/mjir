@@ -7,12 +7,13 @@ import PoliciesPage from "@/pages/policies-page";
 import LearningPage from "@/pages/learning-page";
 import OrganizationPage from "@/pages/organization-page";
 import ProfilePage from "@/pages/profile-page";
+import Users from "@/pages/admin/Users";
 
 export default function HomePage() {
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
-      
+
       <main className="flex-1 overflow-y-auto md:ml-[280px]">
         <Switch>
           <Route path="/" component={DashboardPage} />
@@ -21,9 +22,10 @@ export default function HomePage() {
           <Route path="/learning" component={LearningPage} />
           <Route path="/organization" component={OrganizationPage} />
           <Route path="/profile/:id" component={ProfilePage} />
+          <Route path="/admin/users" component={Users} />
         </Switch>
       </main>
-      
+
       <MobileNav />
     </div>
   );

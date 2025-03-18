@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { User } from "@shared/schema";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -23,23 +22,40 @@ export default function OrganizationPage() {
   const [selectedEmployee, setSelectedEmployee] = useState<User | null>(null);
   const { user: currentUser } = useAuth();
 
-  const { data: users, isLoading: isLoadingUsers } = useUsers();
+  const { data: users = [], isLoading: isLoadingUsers } = useUsers();
   const { data: departments = [], isLoading: isLoadingDepartments } =
     useDepartments();
 
   const isLoading = isLoadingUsers || isLoadingDepartments;
 
   // Filter users based on search and department
-  const filteredUsers = users.filter((user: User) => {
-    const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
-    const matchesSearch =
-      fullName.includes(searchQuery.toLowerCase()) ||
-      user.position.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesDepartment =
-      departmentFilter === "all" || user.department === departmentFilter;
+  const filteredUsers = users
+    ? users.filter((user: User) => {
+        const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+        const matchesSearch =
+          fullName.includes(searchQuery.toLowerCase()) ||
+          user.position.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesDepartment =
+          departmentFilter === "all" || user.department === departmentFilter;
 
-    return matchesSearch && matchesDepartment;
-  });
+        return matchesSearch && matchesDepartment;
+      })
+    : [];
+
+  useEffect(() => {
+    const handleOpenEmployeeProfile = (event: any) => {
+      setSelectedEmployee(event.detail.employee);
+    };
+
+    document.addEventListener("openEmployeeProfile", handleOpenEmployeeProfile);
+
+    return () => {
+      document.removeEventListener(
+        "openEmployeeProfile",
+        handleOpenEmployeeProfile
+      );
+    };
+  }, []);
 
   return (
     <div className="p-6">
@@ -142,15 +158,30 @@ export default function OrganizationPage() {
                               {user.department}
                             </p>
                           </div>
-                          {user.managerId && (
-                            <div className="text-xs text-gray-400 mt-1 italic">
-                              Reports to:{" "}
-                              {users.find((u: User) => u.id === user.managerId)
-                                ?.firstName || ""}{" "}
-                              {users.find((u: User) => u.id === user.managerId)
-                                ?.lastName || ""}
-                            </div>
-                          )}
+                          {user.managerId &&
+                            (() => {
+                              // Find manager once
+                              const manager = users.find(
+                                (u: User) => u.id === user.managerId
+                              );
+                              return (
+                                <div className="text-xs text-gray-400 mt-1 italic">
+                                  Reports to:{" "}
+                                  <button
+                                    className="text-gray-500 hover:text-primary hover:underline"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (manager) {
+                                        setSelectedEmployee(manager);
+                                      }
+                                    }}
+                                  >
+                                    {manager?.firstName || ""}{" "}
+                                    {manager?.lastName || ""}
+                                  </button>
+                                </div>
+                              );
+                            })()}
                           <button
                             className="text-xs font-medium text-primary hover:underline mt-1.5"
                             onClick={(e) => {

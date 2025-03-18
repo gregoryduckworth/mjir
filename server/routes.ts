@@ -13,11 +13,15 @@ import {
   insertActivitySchema,
   insertNotificationSchema,
 } from "@shared/schema";
+import adminRouter from "./routes/admin";
 import { formatISO, addDays, subDays, addMonths, format } from "date-fns";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
   setupAuth(app);
+
+  // Setup admin routes
+  app.use("/api/admin", adminRouter);
 
   // Get users
   app.get("/api/users", async (req, res) => {
