@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -13,36 +13,39 @@ import { ContentLoader } from "@/components/ui/loading";
 import { CourseCard } from "@/components/learning/course-card";
 import { ProgressChart } from "@/components/learning/progress-chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  useCourses,
+  useCoursesCategories,
+  useCoursesProgress,
+  useLearningStats,
+} from "@/hooks/use-api";
 
 export default function LearningPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [currentTab, setCurrentTab] = useState("in-progress");
 
-  const { data: courses = [], isLoading: isLoadingCourses } = useQuery({
-    queryKey: ["/api/courses"],
-  });
+  const { data: courses = [], isLoading: isLoadingCourses } = useCourses();
+  const { data: progress = [], isLoading: isLoadingProgress } =
+    useCoursesProgress();
+  const { data: categories = [], isLoading: isLoadingCategories } =
+    useCoursesCategories();
+  const { data: stats, isLoading: isLoadingStats } = useLearningStats();
 
-  const { data: progress = [], isLoading: isLoadingProgress } = useQuery({
-    queryKey: ["/api/courses/progress"],
-  });
-
-  const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
-    queryKey: ["/api/courses/categories"],
-  });
-
-  const { data: stats, isLoading: isLoadingStats } = useQuery({
-    queryKey: ["/api/learning/stats"],
-  });
-
-  const isLoading = isLoadingCourses || isLoadingProgress || isLoadingCategories || isLoadingStats;
+  const isLoading =
+    isLoadingCourses ||
+    isLoadingProgress ||
+    isLoadingCategories ||
+    isLoadingStats;
 
   // Filter courses based on search and category
   const filteredCourses = courses.filter((course: any) => {
-    const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          course.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = categoryFilter === "all" || course.category === categoryFilter;
-    
+    const matchesSearch =
+      course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      course.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory =
+      categoryFilter === "all" || course.category === categoryFilter;
+
     return matchesSearch && matchesCategory;
   });
 
@@ -81,7 +84,7 @@ export default function LearningPage() {
           <Search className="text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4" />
         </div>
       </div>
-      
+
       {isLoading ? (
         <ContentLoader text="Loading learning data..." />
       ) : (
@@ -90,35 +93,46 @@ export default function LearningPage() {
             <div className="lg:col-span-2">
               <ProgressChart stats={stats} />
             </div>
-            
+
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
               <h2 className="text-lg font-semibold mb-4">Quick Stats</h2>
               <div className="space-y-4">
                 <div className="p-4 bg-primary/5 rounded-lg">
-                  <p className="text-sm text-gray-500 mb-1">Courses Completed</p>
-                  <h3 className="text-2xl font-semibold">{stats.completedCourses} / {stats.totalCourses}</h3>
+                  <p className="text-sm text-gray-500 mb-1">
+                    Courses Completed
+                  </p>
+                  <h3 className="text-2xl font-semibold">
+                    {stats.completedCourses} / {stats.totalCourses}
+                  </h3>
                 </div>
-                
+
                 <div className="p-4 bg-primary/5 rounded-lg">
-                  <p className="text-sm text-gray-500 mb-1">Average Completion</p>
-                  <h3 className="text-2xl font-semibold">{stats.totalCompletionRate}%</h3>
+                  <p className="text-sm text-gray-500 mb-1">
+                    Average Completion
+                  </p>
+                  <h3 className="text-2xl font-semibold">
+                    {stats.totalCompletionRate}%
+                  </h3>
                 </div>
-                
+
                 <div className="p-4 bg-primary/5 rounded-lg">
-                  <p className="text-sm text-gray-500 mb-1">Most Active Category</p>
-                  <h3 className="text-xl font-semibold">{stats.mostActiveCategory}</h3>
+                  <p className="text-sm text-gray-500 mb-1">
+                    Most Active Category
+                  </p>
+                  <h3 className="text-xl font-semibold">
+                    {stats.mostActiveCategory}
+                  </h3>
                 </div>
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
             <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between sm:items-center">
-              <h2 className="text-lg font-semibold mb-4 sm:mb-0">Your Learning</h2>
-              <Select
-                value={categoryFilter}
-                onValueChange={setCategoryFilter}
-              >
+              <h2 className="text-lg font-semibold mb-4 sm:mb-0">
+                Your Learning
+              </h2>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
@@ -132,16 +146,26 @@ export default function LearningPage() {
                 </SelectContent>
               </Select>
             </div>
-            
-            <Tabs defaultValue="in-progress" onValueChange={setCurrentTab} value={currentTab}>
+
+            <Tabs
+              defaultValue="in-progress"
+              onValueChange={setCurrentTab}
+              value={currentTab}
+            >
               <div className="px-6 pt-4">
                 <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="in-progress">In Progress ({inProgressCourses.length})</TabsTrigger>
-                  <TabsTrigger value="completed">Completed ({completedCourses.length})</TabsTrigger>
-                  <TabsTrigger value="available">Available ({availableCourses.length})</TabsTrigger>
+                  <TabsTrigger value="in-progress">
+                    In Progress ({inProgressCourses.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="completed">
+                    Completed ({completedCourses.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="available">
+                    Available ({availableCourses.length})
+                  </TabsTrigger>
                 </TabsList>
               </div>
-              
+
               <TabsContent value="in-progress" className="p-6 pt-4">
                 {inProgressCourses.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
@@ -150,16 +174,16 @@ export default function LearningPage() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {inProgressCourses.map((course: any) => (
-                      <CourseCard 
-                        key={course.id} 
-                        course={course} 
+                      <CourseCard
+                        key={course.id}
+                        course={course}
                         progress={getUserProgress(course.id)}
                       />
                     ))}
                   </div>
                 )}
               </TabsContent>
-              
+
               <TabsContent value="completed" className="p-6 pt-4">
                 {completedCourses.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
@@ -168,16 +192,16 @@ export default function LearningPage() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {completedCourses.map((course: any) => (
-                      <CourseCard 
-                        key={course.id} 
-                        course={course} 
+                      <CourseCard
+                        key={course.id}
+                        course={course}
                         progress={getUserProgress(course.id)}
                       />
                     ))}
                   </div>
                 )}
               </TabsContent>
-              
+
               <TabsContent value="available" className="p-6 pt-4">
                 {availableCourses.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
@@ -186,10 +210,7 @@ export default function LearningPage() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {availableCourses.map((course: any) => (
-                      <CourseCard 
-                        key={course.id} 
-                        course={course}
-                      />
+                      <CourseCard key={course.id} course={course} />
                     ))}
                   </div>
                 )}
