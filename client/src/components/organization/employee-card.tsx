@@ -1,4 +1,4 @@
-import { User } from "@shared/schema";
+import { User } from "@/types";
 import {
   Dialog,
   DialogContent,
@@ -16,15 +16,8 @@ import {
   Mail, 
   Phone, 
   MessageCircle, 
-  Briefcase, 
   Calendar, 
-  MapPin, 
-  DollarSign, 
   User as UserIcon,
-  GraduationCap,
-  Award,
-  Globe,
-  Languages
 } from "lucide-react";
 import { format } from "date-fns";
 
