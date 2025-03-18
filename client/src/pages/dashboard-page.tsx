@@ -2,13 +2,13 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { 
-  Calendar, 
-  Clock, 
-  GraduationCap, 
+import {
+  Calendar,
+  Clock,
+  GraduationCap,
   Users,
   Search,
-  PlusCircle
+  PlusCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,32 +18,30 @@ import { HolidayTable } from "@/components/dashboard/holiday-table";
 import { ActivityItem } from "@/components/dashboard/activity-item";
 import { LearningCard } from "@/components/dashboard/learning-card";
 import { HolidayForm } from "@/components/holiday/holiday-form";
+import {
+  useActivities,
+  useCoursesCurrent,
+  useDashboardStats,
+  useHolidaysUpcoming,
+  useUsers,
+} from "@/hooks/use-api";
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const [isHolidayFormOpen, setIsHolidayFormOpen] = useState(false);
+  const { data: stats, isLoading: isLoadingStats } = useDashboardStats();
+  const { data: users, isLoading: isLoadingUsers } = useUsers();
+  const { data: holidays, isLoading: isLoadingHolidays } =
+    useHolidaysUpcoming();
+  const { data: activities, isLoading: isLoadingActivities } = useActivities();
+  const { data: courses, isLoading: isLoadingCourses } = useCoursesCurrent();
 
-  const { data: stats, isLoading: isLoadingStats } = useQuery({
-    queryKey: ["/api/dashboard/stats"],
-  });
-
-  const { data: holidays, isLoading: isLoadingHolidays } = useQuery({
-    queryKey: ["/api/holiday-requests/upcoming"],
-  });
-
-  const { data: activities, isLoading: isLoadingActivities } = useQuery({
-    queryKey: ["/api/activities"],
-  });
-
-  const { data: courses, isLoading: isLoadingCourses } = useQuery({
-    queryKey: ["/api/courses/current"],
-  });
-
-  const { data: users, isLoading: isLoadingUsers } = useQuery({
-    queryKey: ["/api/users"],
-  });
-
-  const isLoading = isLoadingStats || isLoadingHolidays || isLoadingActivities || isLoadingCourses || isLoadingUsers;
+  const isLoading =
+    isLoadingStats ||
+    isLoadingHolidays ||
+    isLoadingActivities ||
+    isLoadingCourses ||
+    isLoadingUsers;
 
   return (
     <div className="p-6">
@@ -82,7 +80,7 @@ export default function DashboardPage() {
               subTextColor="text-success"
               subTextIconName="arrow-up"
             />
-            
+
             <StatsCard
               title="Pending Requests"
               value={stats?.pendingRequests}
@@ -93,7 +91,7 @@ export default function DashboardPage() {
               subTextPrefix={`${stats?.awaitingApproval} awaiting approval`}
               subTextColor="text-warning"
             />
-            
+
             <StatsCard
               title="Learning Completion"
               value={`${stats?.learningCompletion}%`}
@@ -105,7 +103,7 @@ export default function DashboardPage() {
               subTextColor="text-success"
               subTextIconName="arrow-up"
             />
-            
+
             <StatsCard
               title="Team Availability"
               value={`${stats?.teamAvailability}%`}
@@ -124,12 +122,17 @@ export default function DashboardPage() {
             {/* Upcoming Holidays */}
             <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100">
               <div className="p-6 border-b border-gray-100">
-                <h2 className="text-lg font-semibold">Upcoming Team Holidays</h2>
+                <h2 className="text-lg font-semibold">
+                  Upcoming Team Holidays
+                </h2>
               </div>
               <div className="p-6">
                 <HolidayTable holidays={holidays} users={users} />
                 <div className="mt-4 text-center">
-                  <Link to="/holiday" className="text-primary text-sm font-medium hover:underline">
+                  <Link
+                    to="/holiday"
+                    className="text-primary text-sm font-medium hover:underline"
+                  >
                     View all holiday requests
                   </Link>
                 </div>
@@ -148,7 +151,10 @@ export default function DashboardPage() {
                   ))}
                 </div>
                 <div className="mt-6 text-center">
-                  <Link to="/activity" className="text-primary text-sm font-medium hover:underline">
+                  <Link
+                    to="/activity"
+                    className="text-primary text-sm font-medium hover:underline"
+                  >
                     View all activity
                   </Link>
                 </div>
@@ -159,18 +165,23 @@ export default function DashboardPage() {
           {/* Learning Progress */}
           <div className="mt-6 bg-white rounded-xl shadow-sm border border-gray-100">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-              <h2 className="text-lg font-semibold">Current Learning Progress</h2>
-              <Link to="/learning" className="text-primary text-sm font-medium hover:underline">
+              <h2 className="text-lg font-semibold">
+                Current Learning Progress
+              </h2>
+              <Link
+                to="/learning"
+                className="text-primary text-sm font-medium hover:underline"
+              >
                 View all courses
               </Link>
             </div>
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {courses.map((item: any) => (
-                  <LearningCard 
-                    key={item.course.id} 
-                    course={item.course} 
-                    progress={item.progress} 
+                  <LearningCard
+                    key={item.course.id}
+                    course={item.course}
+                    progress={item.progress}
                   />
                 ))}
               </div>
@@ -179,7 +190,10 @@ export default function DashboardPage() {
         </>
       )}
 
-      <HolidayForm isOpen={isHolidayFormOpen} onClose={() => setIsHolidayFormOpen(false)} />
+      <HolidayForm
+        isOpen={isHolidayFormOpen}
+        onClose={() => setIsHolidayFormOpen(false)}
+      />
     </div>
   );
 }

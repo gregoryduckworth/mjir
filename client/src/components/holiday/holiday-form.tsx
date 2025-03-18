@@ -38,19 +38,24 @@ import {
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 
-const holidayFormSchema = insertHolidayRequestSchema.extend({
-  startDate: z.date({
-    required_error: "A start date is required",
-  }),
-  endDate: z.date({
-    required_error: "An end date is required",
-  }),
-}).refine(data => {
-  return data.startDate <= data.endDate;
-}, {
-  message: "End date must be after start date",
-  path: ["endDate"],
-});
+const holidayFormSchema = insertHolidayRequestSchema
+  .extend({
+    startDate: z.date({
+      required_error: "A start date is required",
+    }),
+    endDate: z.date({
+      required_error: "An end date is required",
+    }),
+  })
+  .refine(
+    (data) => {
+      return data.startDate <= data.endDate;
+    },
+    {
+      message: "End date must be after start date",
+      path: ["endDate"],
+    }
+  );
 
 type HolidayFormValues = z.infer<typeof holidayFormSchema>;
 
@@ -62,7 +67,10 @@ interface HolidayFormProps {
 export function HolidayForm({ isOpen, onClose }: HolidayFormProps) {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
+  const [dateRange, setDateRange] = useState<{
+    from: Date | undefined;
+    to: Date | undefined;
+  }>({
     from: undefined,
     to: undefined,
   });
@@ -116,11 +124,15 @@ export function HolidayForm({ isOpen, onClose }: HolidayFormProps) {
 
   const onSubmit = (data: HolidayFormValues) => {
     if (!user) return;
-    
-    holidayMutation.mutate({
+
+    const formattedData = {
       ...data,
       userId: user.id,
-    });
+      startDate: new Date(data.startDate),
+      endDate: new Date(data.endDate),
+    };
+
+    holidayMutation.mutate(formattedData);
   };
 
   return (
@@ -218,7 +230,10 @@ export function HolidayForm({ isOpen, onClose }: HolidayFormProps) {
                           }}
                           disabled={(date) => {
                             const startDate = form.getValues("startDate");
-                            return date < new Date() || (startDate ? date < startDate : false);
+                            return (
+                              date < new Date() ||
+                              (startDate ? date < startDate : false)
+                            );
                           }}
                           initialFocus
                         />
