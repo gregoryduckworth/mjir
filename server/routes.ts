@@ -4,17 +4,11 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { z } from "zod";
 import {
-  insertHolidayRequestSchema,
-  insertPolicySchema,
-  insertCourseSchema,
-  insertCourseModuleSchema,
-  insertUserCourseProgressSchema,
-  insertDepartmentSchema,
-  insertActivitySchema,
-  insertNotificationSchema,
-} from "@shared/schema";
+  isAuthenticated,
+  isAdminOrHrManagerOrManager,
+} from "./middleware/auth";
+import { insertHolidayRequestSchema, insertPolicySchema } from "@shared/schema";
 import adminRouter from "./routes/admin";
-import { formatISO, addDays, subDays, addMonths, format } from "date-fns";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
@@ -24,17 +18,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/admin", adminRouter);
 
   // Get users
-  app.get("/api/users", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-
+  app.get("/api/users", isAuthenticated, async (req, res) => {
     const users = await storage.getAllUsers();
     res.json(users);
   });
 
   // Dashboard stats
-  app.get("/api/dashboard/stats", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-
+  app.get("/api/dashboard/stats", isAuthenticated, async (req, res) => {
     const user = req.user;
 
     // Get holiday stats
@@ -96,9 +86,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Holiday Requests
-  app.get("/api/holiday-requests", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-
+  app.get("/api/holiday-requests", isAuthenticated, async (req, res) => {
     // If user is an admin, HR manager, or manager, return all requests
     // Otherwise only return the user's own requests
     const user = req.user;
@@ -136,45 +124,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(requestsWithUserInfo);
   });
 
-  app.get("/api/holiday-requests/upcoming", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+  app.get(
+    "/api/holiday-requests/upcoming",
+    isAuthenticated,
+    async (req, res) => {
+      const allRequests = await storage.getAllHolidayRequests();
+      const upcomingRequests = allRequests
+        .filter(
+          (r) => r.status !== "rejected" && new Date(r.startDate) >= new Date()
+        )
+        .sort(
+          (a, b) =>
+            new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+        )
+        .slice(0, 5);
 
-    const allRequests = await storage.getAllHolidayRequests();
-    const upcomingRequests = allRequests
-      .filter(
-        (r) => r.status !== "rejected" && new Date(r.startDate) >= new Date()
-      )
-      .sort(
-        (a, b) =>
-          new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
-      )
-      .slice(0, 5);
+      res.json(upcomingRequests);
+    }
+  );
 
-    res.json(upcomingRequests);
-  });
+  app.get(
+    "/api/holiday-requests/balance",
+    isAuthenticated,
+    async (req, res) => {
+      const user = req.user;
+      const requests = await storage.getHolidayRequestsByUserId(user.id);
+      const approvedRequests = requests.filter((r) => r.status === "approved");
+      const totalUsed = approvedRequests.reduce(
+        (acc, req) => acc + req.duration,
+        0
+      );
+      const allowance = 25; // Annual allowance example
 
-  app.get("/api/holiday-requests/balance", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+      res.json({
+        allowance,
+        used: totalUsed,
+        remaining: allowance - totalUsed,
+      });
+    }
+  );
 
-    const user = req.user;
-    const requests = await storage.getHolidayRequestsByUserId(user.id);
-    const approvedRequests = requests.filter((r) => r.status === "approved");
-    const totalUsed = approvedRequests.reduce(
-      (acc, req) => acc + req.duration,
-      0
-    );
-    const allowance = 25; // Annual allowance example
-
-    res.json({
-      allowance,
-      used: totalUsed,
-      remaining: allowance - totalUsed,
-    });
-  });
-
-  app.post("/api/holiday-requests", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-
+  app.post("/api/holiday-requests", isAuthenticated, async (req, res) => {
     try {
       let { startDate, endDate, ...rest } = req.body;
 
@@ -213,116 +203,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Holiday requests for manager approval
-  app.get("/api/holiday-requests/pending", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+  app.get(
+    "/api/holiday-requests/pending",
+    isAdminOrHrManagerOrManager,
+    async (req, res) => {
+      const allRequests = await storage.getAllHolidayRequests();
+      const pendingRequests = allRequests.filter((r) => r.status === "pending");
 
-    const user = req.user;
-    // Check if user is authorized to view pending requests (admin, HR manager, or manager)
-    if (
-      user.role !== "admin" &&
-      user.role !== "hr_manager" &&
-      user.role !== "manager"
-    ) {
-      return res
-        .status(403)
-        .send("Forbidden: Only managers can approve holiday requests");
-    }
-
-    const allRequests = await storage.getAllHolidayRequests();
-    const pendingRequests = allRequests.filter((r) => r.status === "pending");
-
-    // Get user information for each request
-    const users = await storage.getAllUsers();
-    const pendingRequestsWithUserInfo = pendingRequests.map((request) => {
-      const requestUser = users.find((u) => u.id === request.userId);
-      return {
-        ...request,
-        user: requestUser
-          ? {
-              id: requestUser.id,
-              firstName: requestUser.firstName,
-              lastName: requestUser.lastName,
-              department: requestUser.department,
-              position: requestUser.position,
-              profileImage: requestUser.profileImage,
-            }
-          : null,
-      };
-    });
-
-    res.json(pendingRequestsWithUserInfo);
-  });
-
-  // Approve or reject holiday request
-  app.patch("/api/holiday-requests/:id/status", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-
-    const user = req.user;
-    // Check if user is authorized to change status (admin, HR manager, or manager)
-    if (
-      user.role !== "admin" &&
-      user.role !== "hr_manager" &&
-      user.role !== "manager"
-    ) {
-      return res
-        .status(403)
-        .send("Forbidden: Only managers can approve holiday requests");
-    }
-
-    const requestId = parseInt(req.params.id);
-    const { status } = req.body;
-
-    if (!status || (status !== "approved" && status !== "rejected")) {
-      return res
-        .status(400)
-        .json({ error: "Invalid status. Must be 'approved' or 'rejected'" });
-    }
-
-    try {
-      // Get the original request
-      const originalRequest = await storage.getHolidayRequest(requestId);
-      if (!originalRequest) {
-        return res.status(404).json({ error: "Holiday request not found" });
-      }
-
-      // Update the request status
-      const updatedRequest = await storage.updateHolidayRequest(
-        requestId,
-        status,
-        user.id
-      );
-
-      // Create activity for the employee who requested the holiday
-      await storage.createActivity({
-        userId: originalRequest.userId,
-        type: "holiday_" + status,
-        description: `Your holiday request was <span class="font-medium ${
-          status === "approved" ? "text-success" : "text-destructive"
-        }">${status}</span>`,
-        metadata: { holidayRequestId: requestId },
+      // Get user information for each request
+      const users = await storage.getAllUsers();
+      const pendingRequestsWithUserInfo = pendingRequests.map((request) => {
+        const requestUser = users.find((u) => u.id === request.userId);
+        return {
+          ...request,
+          user: requestUser
+            ? {
+                id: requestUser.id,
+                firstName: requestUser.firstName,
+                lastName: requestUser.lastName,
+                department: requestUser.department,
+                position: requestUser.position,
+                profileImage: requestUser.profileImage,
+              }
+            : null,
+        };
       });
 
-      // Create notification for employee
-      await createHolidayStatusNotification(
-        updatedRequest,
-        status,
-        originalRequest.userId,
-        user.id
-      );
-
-      res.json(updatedRequest);
-    } catch (error) {
-      console.error(error);
-      res
-        .status(500)
-        .json({ error: "Failed to update holiday request status" });
+      res.json(pendingRequestsWithUserInfo);
     }
-  });
+  );
+
+  // Approve or reject holiday request
+  app.patch(
+    "/api/holiday-requests/:id/status",
+    isAuthenticated,
+    async (req, res) => {
+      const user = req.user;
+      // Check if user is authorized to change status (admin, HR manager, or manager)
+      if (
+        user.role !== "admin" &&
+        user.role !== "hr_manager" &&
+        user.role !== "manager"
+      ) {
+        return res
+          .status(403)
+          .send("Forbidden: Only managers can approve holiday requests");
+      }
+
+      const requestId = parseInt(req.params.id);
+      const { status } = req.body;
+
+      if (!status || (status !== "approved" && status !== "rejected")) {
+        return res
+          .status(400)
+          .json({ error: "Invalid status. Must be 'approved' or 'rejected'" });
+      }
+
+      try {
+        // Get the original request
+        const originalRequest = await storage.getHolidayRequest(requestId);
+        if (!originalRequest) {
+          return res.status(404).json({ error: "Holiday request not found" });
+        }
+
+        // Update the request status
+        const updatedRequest = await storage.updateHolidayRequest(
+          requestId,
+          status,
+          user.id
+        );
+
+        // Create activity for the employee who requested the holiday
+        await storage.createActivity({
+          userId: originalRequest.userId,
+          type: "holiday_" + status,
+          description: `Your holiday request was <span class="font-medium ${
+            status === "approved" ? "text-success" : "text-destructive"
+          }">${status}</span>`,
+          metadata: { holidayRequestId: requestId },
+        });
+
+        // Create notification for employee
+        await createHolidayStatusNotification(
+          updatedRequest,
+          status,
+          originalRequest.userId,
+          user.id
+        );
+
+        res.json(updatedRequest);
+      } catch (error) {
+        console.error(error);
+        res
+          .status(500)
+          .json({ error: "Failed to update holiday request status" });
+      }
+    }
+  );
 
   // Policies
-  app.get("/api/policies", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-
+  app.get("/api/policies", isAuthenticated, async (req, res) => {
     const policies = await storage.getAllPolicies();
     res.json(policies);
   });
@@ -335,9 +315,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(categories);
   });
 
-  app.post("/api/policies", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-
+  app.post("/api/policies", isAuthenticated, async (req, res) => {
     // Check if user is an HR admin or HR manager
     if (
       req.user.role !== "admin" &&
@@ -374,9 +352,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Learning & Development
-  app.get("/api/courses", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-
+  app.get("/api/courses", isAuthenticated, async (req, res) => {
     const courses = await storage.getAllCourses();
     res.json(courses);
   });
@@ -389,16 +365,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(categories);
   });
 
-  app.get("/api/courses/progress", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+  app.get("/api/courses/:id/modules", isAuthenticated, async (req, res) => {
+    const courseId = parseInt(req.params.id);
+    const modules = await storage.getCourseModulesByCourseId(courseId);
+    res.json(modules);
+  });
 
+  app.get("/api/courses/progress", isAuthenticated, async (req, res) => {
     const progress = await storage.getUserCourseProgressByUserId(req.user.id);
     res.json(progress);
   });
 
-  app.get("/api/courses/current", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-
+  app.get("/api/courses/current", isAuthenticated, async (req, res) => {
     const courses = await storage.getAllCourses();
     const progress = await storage.getUserCourseProgressByUserId(req.user.id);
 
@@ -474,17 +452,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Organization
-  app.get("/api/departments", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-
+  app.get("/api/departments", isAuthenticated, async (req, res) => {
     const departments = await storage.getAllDepartments();
     res.json(departments);
   });
 
   // Activities
-  app.get("/api/activities", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-
+  app.get("/api/activities", isAuthenticated, async (req, res) => {
     const activities = await storage.getActivitiesByUserId(req.user.id);
     const recentActivities = activities
       .sort(
@@ -497,9 +471,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Notifications
-  app.get("/api/notifications", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-
+  app.get("/api/notifications", isAuthenticated, async (req, res) => {
     const notifications = await storage.getNotificationsByUserId(req.user.id);
     res.json(notifications);
   });
