@@ -1,14 +1,15 @@
 import { Page } from "@playwright/test";
+import { BASE_URL } from "../../../playwright.config";
 
 export class BasePage {
-  readonly page;
+  readonly page: Page;
 
   constructor(page: Page) {
     this.page = page;
   }
 
-  async goto(url?: string) {
-    await this.page.goto(`http://localhost:5001${url ? `/${url}` : ""}`);
-    await this.page.waitForLoadState("domcontentloaded");
+  async goto(path = "/") {
+    const url = `${BASE_URL}/${path}`;
+    await this.page.goto(url, { waitUntil: "domcontentloaded" });
   }
 }
