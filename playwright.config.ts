@@ -1,4 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
+import "dotenv/config";
+
+export const BASE_URL = process.env.BASE_URL || "http://localhost:5001";
 
 export default defineConfig({
   testDir: "./client/playwright/tests",
@@ -8,7 +11,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: "html",
   use: {
-    baseURL: "http://localhost:5001",
+    baseURL: BASE_URL,
     screenshot: "only-on-failure",
     launchOptions: {
       slowMo: 200,
@@ -22,7 +25,7 @@ export default defineConfig({
   ],
   webServer: {
     command: "npm run dev",
-    url: "http://localhost:5001",
+    url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     stdout: "pipe",
     stderr: "pipe",
