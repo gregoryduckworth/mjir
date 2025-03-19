@@ -146,7 +146,7 @@ export default function DashboardPage() {
               </div>
               <div className="p-6">
                 <div className="space-y-6">
-                  {activities.map((activity: any) => (
+                  {activities?.map((activity: any) => (
                     <ActivityItem key={activity.id} activity={activity} />
                   ))}
                 </div>
@@ -177,7 +177,7 @@ export default function DashboardPage() {
             </div>
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {courses.map((item: any) => (
+                {courses?.map((item: any) => (
                   <LearningCard
                     key={item.course.id}
                     course={item.course}

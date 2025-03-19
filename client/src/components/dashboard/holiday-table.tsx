@@ -54,7 +54,7 @@ export function HolidayTable({ holidays, users }: HolidayTableProps) {
           </TableRow>
         </TableHeader>
         <TableBody className="divide-y divide-gray-200">
-          {holidays.map((holiday) => {
+          {holidays?.map((holiday) => {
             const user = getUser(holiday.userId);
             if (!user) return null;
 
@@ -63,8 +63,14 @@ export function HolidayTable({ holidays, users }: HolidayTableProps) {
                 <TableCell className="px-4 py-3 whitespace-nowrap">
                   <div className="flex items-center">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.profileImage} alt={`${user.firstName} ${user.lastName}`} />
-                      <AvatarFallback>{user.firstName.charAt(0)}{user.lastName.charAt(0)}</AvatarFallback>
+                      <AvatarImage
+                        src={user.profileImage}
+                        alt={`${user.firstName} ${user.lastName}`}
+                      />
+                      <AvatarFallback>
+                        {user.firstName.charAt(0)}
+                        {user.lastName.charAt(0)}
+                      </AvatarFallback>
                     </Avatar>
                     <div className="ml-3">
                       <div className="text-sm font-medium text-gray-900">
@@ -77,14 +83,21 @@ export function HolidayTable({ holidays, users }: HolidayTableProps) {
                   </div>
                 </TableCell>
                 <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-gray-800">
-                  {format(new Date(holiday.startDate), "MMM d, yyyy")} - {format(new Date(holiday.endDate), "MMM d, yyyy")}
+                  {format(new Date(holiday.startDate), "MMM d, yyyy")} -{" "}
+                  {format(new Date(holiday.endDate), "MMM d, yyyy")}
                 </TableCell>
                 <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-gray-800">
                   {holiday.duration} {holiday.duration === 1 ? "day" : "days"}
                 </TableCell>
                 <TableCell className="px-4 py-3 whitespace-nowrap">
-                  <Badge variant="outline" className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(holiday.status)}`}>
-                    {holiday.status.charAt(0).toUpperCase() + holiday.status.slice(1)}
+                  <Badge
+                    variant="outline"
+                    className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                      holiday.status
+                    )}`}
+                  >
+                    {holiday.status.charAt(0).toUpperCase() +
+                      holiday.status.slice(1)}
                   </Badge>
                 </TableCell>
               </TableRow>

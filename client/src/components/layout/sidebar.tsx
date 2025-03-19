@@ -119,7 +119,12 @@ export function Sidebar() {
                     {user.firstName} {user.lastName}
                   </p>
                   <p className="text-xs text-gray-500">{user.position}</p>
-                  <span className="text-xs text-primary">View profile</span>
+                  <span
+                    className="text-xs text-primary"
+                    data-testid="view-profile"
+                  >
+                    View profile
+                  </span>
                 </div>
               </div>
             </div>
