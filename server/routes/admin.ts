@@ -2,17 +2,9 @@ import { Router } from "express";
 import { storage } from "../storage";
 import { insertUserSchema } from "@shared/schema";
 import { z } from "zod";
+import { isAdmin } from "../middleware/auth";
 
 const router = Router();
-
-// Middleware to check if user is admin
-const isAdmin = (req: any, res: any, next: any) => {
-  if (!req.isAuthenticated())
-    return res.status(401).json({ message: "Unauthorized" });
-  if (req.user.role !== "admin")
-    return res.status(403).json({ message: "Forbidden" });
-  next();
-};
 
 // Get all users
 router.get("/users", isAdmin, async (req, res) => {

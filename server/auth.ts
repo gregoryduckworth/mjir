@@ -6,6 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
+import { isAuthenticated } from "./middleware/auth";
 
 declare global {
   namespace Express {
@@ -36,7 +37,7 @@ export function setupAuth(app: Express) {
     store: storage.sessionStore,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24, // 1 day
-    }
+    },
   };
 
   app.set("trust proxy", 1);
@@ -49,26 +50,30 @@ export function setupAuth(app: Express) {
       try {
         const user = await storage.getUserByUsername(username);
         if (!user) {
-          return done(null, false, { message: "Incorrect username or password" });
+          return done(null, false, {
+            message: "Incorrect username or password",
+          });
         }
-        
+
         // For demo purposes, allow easy login with "password" regardless of stored hash
         // This is only for demonstration and would be removed in production
         if (password === "password") {
           return done(null, user);
         }
-        
+
         // Otherwise check the hashed password
         const isPasswordValid = await comparePasswords(password, user.password);
         if (!isPasswordValid) {
-          return done(null, false, { message: "Incorrect username or password" });
+          return done(null, false, {
+            message: "Incorrect username or password",
+          });
         }
-        
+
         return done(null, user);
       } catch (error) {
         return done(error);
       }
-    }),
+    })
   );
 
   passport.serializeUser((user, done) => done(null, user.id));
@@ -90,10 +95,10 @@ export function setupAuth(app: Express) {
 
       // Hash the password before storing
       const hashedPassword = await hashPassword(req.body.password);
-      
+
       const user = await storage.createUser({
         ...req.body,
-        password: hashedPassword
+        password: hashedPassword,
       });
 
       // For security, don't send the password back
@@ -111,11 +116,14 @@ export function setupAuth(app: Express) {
   app.post("/api/login", (req, res, next) => {
     passport.authenticate("local", (err, user, info) => {
       if (err) return next(err);
-      if (!user) return res.status(401).json({ message: info?.message || "Authentication failed" });
-      
+      if (!user)
+        return res
+          .status(401)
+          .json({ message: info?.message || "Authentication failed" });
+
       req.login(user, (err) => {
         if (err) return next(err);
-        
+
         // For security, don't send the password back
         const { password, ...userWithoutPassword } = user;
         return res.status(200).json(userWithoutPassword);
@@ -130,9 +138,7 @@ export function setupAuth(app: Express) {
     });
   });
 
-  app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    
+  app.get("/api/user", isAuthenticated, (req, res) => {
     // For security, don't send the password back
     const { password, ...userWithoutPassword } = req.user;
     res.json(userWithoutPassword);
